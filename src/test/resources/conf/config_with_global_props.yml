@@ -1,0 +1,66 @@
+### ANY CHANGES TO THIS FILE DOES NOT REQUIRE A RESTART ###
+
+#This will create this metric in all the tiers, under this path
+#metricPrefix: Custom Metrics|SiteMinder
+
+#This will create it in specific Tier/Component. Make sure to replace <COMPONENT_ID> with the appropriate one from your environment.
+#To find the <COMPONENT_ID> in your environment, please follow the screenshot https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
+metricPrefix: Server|Component:<COMPONENT_ID>|Custom Metrics|SiteMinder
+
+
+instances:
+  - host: ""
+    port: 161
+    communityString: public
+    snmpVersion: 2 # Only required for snmp v1, will default to 2
+    displayName: "SiteMinder Manager"  #Required field for display purposes
+    #timeout: 1 # second, by default
+    #retries: 5
+    #maxRepetitions: 10
+
+    #resources: creates a resource mapping that can be used to create readable metric paths.
+    #You may want to see machine names and not ids in the metric path.
+    #You can choose to remove the resources section completely and it will show you machine ids in the metric path.
+    resources:
+        #maps policyServerIndex to policyServerHostID
+      - component: "policyServer"
+        include:
+          policyServerHostID: "1.3.6.1.4.1.2552.200.300.1.1.1.3"
+      #maps webAgentIndex to webAgentHostID
+      - component: "webagents"
+        include:
+          webAgentHostID: "1.3.6.1.4.1.2552.200.300.2.1.1.3"
+          convert: {
+            "9" : "agentA",
+            "7" : "agentB"
+          }
+
+
+    #You can configure multiple components like policyServer,webagents. The component names should match with
+    #the ones in the resources section
+    metrics:
+      - component: "policyServer"   #component name
+        metricType: "SUM SUM INDIVIDUAL"
+        delta: "true"
+        multiplier: 10
+        include:
+          - policyServerMaxSockets: "1.3.6.1.4.1.2552.200.300.1.3.1.17"
+          - policyServerSocketCount: "1.3.6.1.4.1.2552.200.300.1.3.1.18"
+          - policyServerAuthAcceptCount: "1.3.6.1.4.1.2552.200.300.1.3.1.19"
+          - policyServerAuthRejectCount: "1.3.6.1.4.1.2552.200.300.1.3.1.20"
+          - policyServerAzAcceptCount: "1.3.6.1.4.1.2552.200.300.1.3.1.21"
+          - policyServerAzRejectCount: "1.3.6.1.4.1.2552.200.300.1.3.1.22"
+          - policyServerStatus: "1.3.6.1.4.1.2552.200.300.1.3.1.5"
+            convert: {
+              "Active" : "1",
+              "Inactive" : "2",
+              "$default" : "0"
+            }
+
+
+
+
+
+# number of concurrent tasks.
+# This doesn't need to be changed unless many instances are configured
+numberOfThreads: 10
