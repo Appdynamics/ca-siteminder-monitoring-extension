@@ -10,6 +10,8 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Set;
 
+import static com.appdynamics.extensions.siteminder.Util.split;
+
 public class ClusterMetricsProcessorTest {
 
     ClusterMetricsProcessor cmc = new ClusterMetricsProcessor();
@@ -22,7 +24,8 @@ public class ClusterMetricsProcessorTest {
         for (Aggregator<AggregatorKey> aggregator : aggregators) {
             Set<AggregatorKey> keys = aggregator.keys();
             for (AggregatorKey key : keys) {
-                Assert.assertTrue("CacheHits".equals(key.getMetricPath()));
+                String[] splits = split(key.getMetricType(),"\\.");
+                Assert.assertTrue("ClusterA|CacheHits".equals(key.getMetricPath()));
                 Assert.assertTrue(aggregator.getAggregatedValue(key).intValue() == 33);
             }
         }
@@ -36,7 +39,7 @@ public class ClusterMetricsProcessorTest {
         for (Aggregator<AggregatorKey> aggregator : aggregators) {
             Set<AggregatorKey> keys = aggregator.keys();
             for (AggregatorKey key : keys) {
-                Assert.assertTrue("CacheHits".equals(key.getMetricPath()));
+                Assert.assertTrue("ClusterA|CacheHits".equals(key.getMetricPath()));
                 Assert.assertTrue(aggregator.getAggregatedValue(key).intValue() == 100);
             }
         }

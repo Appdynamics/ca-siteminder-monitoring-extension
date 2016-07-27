@@ -6,9 +6,11 @@ import com.appdynamics.extensions.util.AggregatorFactory;
 import com.appdynamics.extensions.util.AggregatorKey;
 import com.appdynamics.extensions.util.MetricWriteHelper;
 import com.google.common.base.Strings;
+import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -37,33 +39,34 @@ public class MetricPrinter {
         }
         for(Metric metric : componentMetrics){
             MetricProperties props = metric.getProperties();
-            printMetric(metric.getMetricKey(),metric.getMetricValue(), props.getAggregationType(),props.getTimeRollupType(),props.getClusterRollupType());
+            String fullMetricPath = formMetricPath(metric.getMetricKey());
+            printMetric(fullMetricPath,metric.getMetricValue(), props.getAggregationType(),props.getTimeRollupType(),props.getClusterRollupType());
         }
     }
 
-    public void reportClusterLevelMetrics(final AggregatorFactory aggregatorFactory, String componentName, final List<Metric> componentMetrics) {
-        if(componentMetrics == null || componentMetrics.isEmpty()){
-            return;
-        }
-        String clusterMetricKeyPrefix = formMetricPath(componentName);
+    public void reportClusterLevelMetrics(final AggregatorFactory aggregatorFactory) {
         Collection<Aggregator<AggregatorKey>> aggregators = aggregatorFactory.getAggregators();
         for (Aggregator<AggregatorKey> aggregator : aggregators) {
             Set<AggregatorKey> keys = aggregator.keys();
             for (AggregatorKey key : keys) {
                 BigDecimal value = aggregator.getAggregatedValue(key);
-                String[] splits = split(key.getMetricType()," ");
-                printMetric(clusterMetricKeyPrefix + "|" + key.getMetricPath(), value, splits[0],splits[1],splits[2]);
+                String path = formMetricPath(key.getMetricPath());
+                String[] splits = split(key.getMetricType(),"\\.");
+                logger.debug("Reported Aggregated metric {} with value {} and with type {}",path,value, Arrays.toString(splits));
+                if(splits.length == 3){
+                    String clusterAgg = splits[2].equals(ClusterMetricsProcessor.IND) ? MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL : MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE;
+                    printMetric(path, value, splits[0],splits[1],clusterAgg);
+                }
             }
         }
-
     }
 
+
     public void printMetric(String metricPath, BigDecimal metricValue, String aggType, String timeRollupType, String clusterRollupType) {
-        String fullMetricPath = formMetricPath(metricPath);
         try{
             String metricValStr = toBigIntString(metricValue);
             if(metricValStr != null) {
-                metricWriter.printMetric(fullMetricPath,metricValStr,aggType,timeRollupType,clusterRollupType);
+                metricWriter.printMetric(metricPath,metricValStr,aggType,timeRollupType,clusterRollupType);
                 //  System.out.println("Sending [" + aggType + METRICS_SEPARATOR + timeRollupType + METRICS_SEPARATOR + clusterRollupType
                 //  		+ "] metric = " + metricPath + " = " + metricValue);
                 logger.debug("Sending [{}|{}|{}] metric= {},value={}", aggType, timeRollupType, clusterRollupType, metricPath, metricValue);
@@ -71,15 +74,15 @@ public class MetricPrinter {
             }
         }
         catch (Exception e){
-            logger.error("Error reporting metric {} with value {}",fullMetricPath,metricValue,e);
+            logger.error("Error reporting metric {} with value {}",metricPath,metricValue,e);
         }
     }
 
     public String formMetricPath(String metricKey) {
         if(!Strings.isNullOrEmpty(displayName)){
-            return metricPrefix + displayName + "|" + metricKey;
+            return metricPrefix + "|" + displayName + "|" + metricKey;
         }
-        return metricPrefix + metricKey;
+        return metricPrefix + "|" + metricKey;
     }
 
     public int getTotalMetricsReported() {

@@ -52,8 +52,11 @@ class MetricValueTransformer {
                 return convertedValue;
             }
             else{
-                logger.error("Cannot find the value {} for conversion",metricValue);
-                return props.getConversionValues().get("$default");
+
+                if(props.getConversionValues().get("$default") != null){
+                    logger.debug("Choosing the $default value to go with {} for conversion",metricValue);
+                    return props.getConversionValues().get("$default");
+                }
             }
         }
         return metricValue;

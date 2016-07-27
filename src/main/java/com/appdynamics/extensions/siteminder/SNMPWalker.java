@@ -45,7 +45,7 @@ public class SNMPWalker {
             }
             VariableBinding[] varBindings = event.getVariableBindings();
             if(varBindings == null || varBindings.length == 0){
-                logger.error("No results returned.");
+                logger.warn("No results returned for {}",event.getUserObject());
                 continue;
             }
             for (VariableBinding vb : varBindings) {

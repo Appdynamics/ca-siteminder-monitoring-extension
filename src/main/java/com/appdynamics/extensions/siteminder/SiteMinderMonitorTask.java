@@ -41,9 +41,6 @@ public class SiteMinderMonitorTask implements Runnable{
     /* a utility to collect cluster metrics. */
     private final ClusterMetricsProcessor clusterMetricsCollector = new ClusterMetricsProcessor();
 
-    /* to aggregate all the component metrics to cluster metrics. */
-    private final AggregatorFactory aggregatorFactory = new AggregatorFactory();
-
     private SiteMinderMonitorTask(){
     }
 
@@ -54,11 +51,11 @@ public class SiteMinderMonitorTask implements Runnable{
         try {
             logger.debug("SiteMinder monitor thread for server {} started.",displayName);
             BigDecimal status = extractAndReportMetrics(metricPrinter);
-            metricPrinter.printMetric(METRICS_COLLECTION_SUCCESSFUL, status
+            metricPrinter.printMetric(metricPrinter.formMetricPath(METRICS_COLLECTION_SUCCESSFUL), status
                     , MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL);
         } catch (Exception e) {
             logger.error("Error in SiteMinder Monitor thread for server {}", displayName, e);
-            metricPrinter.printMetric(METRICS_COLLECTION_SUCCESSFUL, ERROR_VALUE
+            metricPrinter.printMetric(metricPrinter.formMetricPath(METRICS_COLLECTION_SUCCESSFUL), ERROR_VALUE
                     , MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION, MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT, MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL);
 
         }
@@ -89,9 +86,10 @@ public class SiteMinderMonitorTask implements Runnable{
                 @SuppressWarnings("unchecked")
                 List<Metric> componentMetrics = componentCollector.collect(componentName, walker, componentIdentityMap, metricProps);
                 //collect all cluster level metrics
+                AggregatorFactory aggregatorFactory = new AggregatorFactory();
                 clusterMetricsCollector.collect(aggregatorFactory, componentMetrics);
                 metricPrinter.reportComponentMetrics(componentMetrics);
-                metricPrinter.reportClusterLevelMetrics(aggregatorFactory,componentName,componentMetrics);
+                metricPrinter.reportClusterLevelMetrics(aggregatorFactory);
 
             }
         } catch (IOException e) {

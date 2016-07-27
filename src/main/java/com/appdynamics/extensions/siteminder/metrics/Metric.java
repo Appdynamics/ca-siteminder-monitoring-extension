@@ -4,9 +4,18 @@ import java.math.BigDecimal;
 
 public class Metric {
     private String metricName;
+    private String clusterKey;
     private String metricKey;
     private BigDecimal metricValue;
     private MetricProperties properties;
+
+    public String getClusterKey() {
+        return clusterKey;
+    }
+
+    public void setClusterKey(String clusterKey) {
+        this.clusterKey = clusterKey;
+    }
 
     public String getMetricName() {
         return metricName;

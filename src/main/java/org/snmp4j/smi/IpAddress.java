@@ -32,7 +32,7 @@ import java.net.UnknownHostException;
 
 /**
  * The <code>IpAddress</code> class represents an IPv4 address SNMP variable.
- *
+ * This software contains various modifications by AppDynamics, Inc. Copyright 2016.  All rights reserved.
  * @author Frank Fock
  * @version 1.10.3
  * @since 1.0
@@ -169,7 +169,7 @@ public class IpAddress extends SMIAddress implements AssignableFromByteArray {
       throw new IOException("Wrong type encountered when decoding Counter: "+
                             type.getValue());
     }
-    //Changed by kunal.gupta
+    //Changed by AppDynamics 2016
     if (value.length != 4 && value.length != 16) {
       throw new IOException("IpAddress encoding error, wrong length: " +
                             value.length);

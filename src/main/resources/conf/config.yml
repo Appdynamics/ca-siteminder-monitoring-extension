@@ -13,7 +13,7 @@ instances:
   - host: "" 
     port: 161
     communityString: public
-    snmpVersion: 2 # Only required for snmp v1, will default to 2
+    snmpVersion: 2 # Only required for snmp v1, will default to 2. Support only v1 and v2.
     displayName: "SiteMinder Manager"  #Required field for display purposes
     #timeout: 1 # second, by default
     #retries: 5

@@ -39,6 +39,7 @@ public class ComponentMetricsProcessor {
                         Metric m = new Metric();
                         m.setMetricValue(metricValue);
                         m.setMetricKey(metricPath);
+                        m.setClusterKey(componentName);
                         m.setMetricName(props.getMetricName());
                         m.setProperties(props);
                         compMetrics.add(m);
