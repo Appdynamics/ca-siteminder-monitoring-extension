@@ -93,3 +93,21 @@ instances:
 # number of concurrent tasks.
 # This doesn't need to be changed unless many instances are configured
 numberOfThreads: 10
+
+#####################################################################################
+#Uncomment the below lines only if snmpVersion=3. The below lines will configure the auth level
+#policies for snmp v3.
+# security level can be one of 1 - NO_AUTH_NO_PRIV, 2 - AUTH_NO_PRIV, 3 - AUTH_PRIV
+# auth protocol is either MD5, SHA-1 or SHA-256
+#priv protocol is either AES, AES-128, DES etc...
+#####################################################################################
+#snmpV3Configuration:
+#  securityLevel:
+#  username: ""
+#  password: ""
+#  authProtocol: ""
+#  privProtocol: ""
+#  privProtocolPassword: ""
+#  engineBoots=0
+#  encryptedPrivProtocolPassword: ""
+#  encryptedPassword: ""
