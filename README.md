@@ -2,6 +2,7 @@ ca-siteminder-monitoring-extension
 ==================================
 
 An AppDynamics extension to be used with a stand alone Java machine agent to provide metrics for CA's Siteminder.
+I added an option to support V3, but needs to be tested
 
 
 ## Use Case ##
