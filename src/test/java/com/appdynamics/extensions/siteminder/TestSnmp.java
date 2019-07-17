@@ -25,7 +25,7 @@ public class TestSnmp {
     public static void main(String[] args) throws IOException {
         Map config = YmlReader.readFromFileAsMap(new File("config.yml"));
         Target target = factory.createTarget(config);
-        Snmp session = factory.createSNMPSession();
+        Snmp session = factory.createSNMPSession(config);
         SNMPWalker walker = factory.createWalker(session,target,config);
         List<String> oids = (List<String>)config.get("oids");
         Map<String,Object> oidValueMap = walker.walk(oids);
