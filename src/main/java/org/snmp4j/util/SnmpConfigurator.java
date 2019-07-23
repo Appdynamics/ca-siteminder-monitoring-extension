@@ -1,10 +1,22 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - SnmpConfigurator.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.util;
 
 import org.snmp4j.*;
@@ -251,51 +263,12 @@ public class SnmpConfigurator {
             (String) ArgumentParser.getValue(settings, oAuthPassphrase, 0);
         String privPP =
             (String) ArgumentParser.getValue(settings, oPrivPassphrase, 0);
-        OID authProtocol = null;
         String authP =
             (String) ArgumentParser.getValue(settings, oAuthProtocol, 0);
         String privP =
             (String) ArgumentParser.getValue(settings, oPrivProtocol, 0);
-        OID privProtocol = null;
-        if ("MD5".equals(authP)) {
-          authProtocol = AuthMD5.ID;
-        }
-        else if ("SHA".equals(authP)) {
-          authProtocol = AuthSHA.ID;
-        }
-        else if ("SHA224".equals(authP)) {
-          authProtocol = AuthHMAC128SHA224.ID;
-        }
-        else if ("SHA256".equals(authP)) {
-          authProtocol = AuthHMAC192SHA256.ID;
-        }
-        else if ("SHA384".equals(authP)) {
-          authProtocol = AuthHMAC256SHA384.ID;
-        }
-        else if ("SHA512".equals(authP)) {
-          authProtocol = AuthHMAC384SHA512.ID;
-        }
-        if ("DES".equals(privP)) {
-          privProtocol = PrivDES.ID;
-        }
-        else if ("3DES".equals(privP)) {
-          privProtocol = Priv3DES.ID;
-        }
-        else if ("AES".equals(privP) || "AES128".equals(privP)) {
-          privProtocol = PrivAES128.ID;
-        }
-        else if ("AES192".equals(privP)) {
-          privProtocol = PrivAES192.ID;
-        }
-        else if ("AES256".equals(privP)) {
-          privProtocol = PrivAES256.ID;
-        }
-        else if ("AES192p".equals(privP)) {
-          privProtocol = PrivAES192With3DESKeyExtension.ID;
-        }
-        else if ("AES256p".equals(privP)) {
-          privProtocol = PrivAES256With3DESKeyExtension.ID;
-        }
+        OID  authProtocol = getAuthProtocolOid(authP);
+        OID privProtocol = getPrivProtocolOid(privP);
         OctetString un = createOctetString(sn, null);
         snmp.getUSM().addUser(un, new UsmUser(un,
                                               authProtocol,
@@ -315,6 +288,55 @@ public class SnmpConfigurator {
         }
       }
     }
+  }
+
+  public static OID getPrivProtocolOid(String privP) {
+    OID privProtocol = null;
+    if ("DES".equals(privP)) {
+      privProtocol = PrivDES.ID;
+    }
+    else if ("3DES".equals(privP)) {
+      privProtocol = Priv3DES.ID;
+    }
+    else if ("AES".equals(privP) || "AES128".equals(privP)) {
+      privProtocol = PrivAES128.ID;
+    }
+    else if ("AES192".equals(privP)) {
+      privProtocol = PrivAES192.ID;
+    }
+    else if ("AES256".equals(privP)) {
+      privProtocol = PrivAES256.ID;
+    }
+    else if ("AES192p".equals(privP)) {
+      privProtocol = PrivAES192With3DESKeyExtension.ID;
+    }
+    else if ("AES256p".equals(privP)) {
+      privProtocol = PrivAES256With3DESKeyExtension.ID;
+    }
+    return privProtocol;
+  }
+
+  public static OID getAuthProtocolOid(String authP) {
+    OID authProtocol = null;
+    if ("MD5".equals(authP)) {
+      authProtocol = AuthMD5.ID;
+    }
+    else if ("SHA".equals(authP)) {
+      authProtocol = AuthSHA.ID;
+    }
+    else if ("SHA224".equals(authP)) {
+      authProtocol = AuthHMAC128SHA224.ID;
+    }
+    else if ("SHA256".equals(authP)) {
+      authProtocol = AuthHMAC192SHA256.ID;
+    }
+    else if ("SHA384".equals(authP)) {
+      authProtocol = AuthHMAC256SHA384.ID;
+    }
+    else if ("SHA512".equals(authP)) {
+      authProtocol = AuthHMAC384SHA512.ID;
+    }
+    return authProtocol;
   }
 
   private void configureEngine(Snmp snmp, Map settings) {

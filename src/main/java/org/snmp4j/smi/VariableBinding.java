@@ -1,22 +1,32 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - VariableBinding.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.asn1.BERSerializable;
-import org.snmp4j.util.VariableTextFormat;
-
+import java.io.Serializable;
+import org.snmp4j.asn1.*;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.text.ParseException;
+
+import org.snmp4j.SNMP4JSettings;
+import org.snmp4j.util.VariableTextFormat;
 
 /**
  * A <code>VariableBinding</code> is an association of a object instance
@@ -69,7 +79,7 @@ public class VariableBinding
    * Creates a variable binding with the supplied OID and a text value.
    * The text value is parsed based on MIB information to a Variable
    * using the {@link VariableTextFormat} set by
-   * {@link SNMP4JSettings#setVariableTextFormat(VariableTextFormat)}.
+   * {@link SNMP4JSettings#setVariableTextFormat(org.snmp4j.util.VariableTextFormat)}.
    * The default {@link org.snmp4j.util.SimpleVariableTextFormat} does not support
    * this operation. To be able to use this constructor, use the <code>SmiManager</code>
    * of SNMP4J-SMI instead.

@@ -1,25 +1,35 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - Counter64.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 package org.snmp4j.smi;
 
+import java.io.*;
+import java.math.BigInteger;
 import org.snmp4j.asn1.BER;
 import org.snmp4j.asn1.BERInputStream;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.math.BigInteger;
-
 /**
- * The <code>Counter64</code> class represents a 64bit unsigned integer type.
+ * The {@code Counter64} class represents a 64bit unsigned integer type.
  * It is used for monotonically increasing values that wrap around at
  * 2^64-1 (18446744073709551615).
- * <p/>
+ *
  * The unsigned 64bit value is represented by a signed 64bit long value
  * internally.
  *
@@ -40,11 +50,11 @@ public class Counter64 extends AbstractVariable
     setValue(value);
   }
 
-  public void encodeBER(OutputStream outputStream) throws IOException {
+  public void encodeBER(OutputStream outputStream) throws java.io.IOException {
     BER.encodeUnsignedInt64(outputStream, BER.COUNTER64, value);
   }
 
-  public void decodeBER(BERInputStream inputStream) throws IOException {
+  public void decodeBER(BERInputStream inputStream) throws java.io.IOException {
     BER.MutableByte type = new BER.MutableByte();
     long newValue = BER.decodeUnsignedInt64(inputStream, type);
     if (type.getValue() != BER.COUNTER64) {

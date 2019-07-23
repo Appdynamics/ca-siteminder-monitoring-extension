@@ -1,18 +1,28 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - Null.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
+import java.io.*;
 import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BER.MutableByte;
 import org.snmp4j.asn1.BERInputStream;
-
-import java.io.IOException;
-import java.io.OutputStream;
+import org.snmp4j.asn1.BER.MutableByte;
 
 /**
  * The <code>Null</code> class represents SMI Null and the derived
@@ -43,8 +53,8 @@ public class Null extends AbstractVariable {
    setSyntax(exceptionSyntax);
   }
 
-  public void decodeBER(BERInputStream inputStream) throws IOException {
-    MutableByte type = new MutableByte();
+  public void decodeBER(BERInputStream inputStream) throws java.io.IOException {
+    MutableByte type = new BER.MutableByte();
     BER.decodeNull(inputStream, type);
     this.syntax = type.getValue() & 0xFF;
   }
@@ -81,7 +91,7 @@ public class Null extends AbstractVariable {
     return "Null";
   }
 
-  public void encodeBER(OutputStream outputStream) throws IOException {
+  public void encodeBER(OutputStream outputStream) throws java.io.IOException {
     BER.encodeHeader(outputStream, (byte)getSyntax(), 0);
   }
 

@@ -1,33 +1,39 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - TableUtils.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.util;
 
-import org.snmp4j.PDU;
-import org.snmp4j.Session;
-import org.snmp4j.Target;
-import org.snmp4j.event.ResponseEvent;
-import org.snmp4j.event.ResponseListener;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Integer32;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.VariableBinding;
-
-import java.io.IOException;
 import java.util.*;
+
+import org.snmp4j.log.*;
+import org.snmp4j.*;
+import org.snmp4j.event.*;
+import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.smi.*;
+import java.io.*;
 
 /**
  * The <code>TableUtils</code> class provides utility functions to retrieve
  * SNMP tabular data.
  *
  * @author Frank Fock
- * @version 1.6e
+ * @version 2.5.11
  * @since 1.0.2
  */
 public class TableUtils extends AbstractSnmpUtility {
@@ -45,6 +51,10 @@ public class TableUtils extends AbstractSnmpUtility {
 
   private int maxNumOfRowsPerPDU = 10;
   private int maxNumColumnsPerPDU = 10;
+
+  private boolean sendColumnPDUsMultiThreaded;
+  private boolean checkLexicographicOrdering = true;
+  private int ignoreMaxLexicographicRowOrderingErrors = 3;
 
   /**
    * Creates a <code>TableUtils</code> instance. The created instance is thread
@@ -201,7 +211,10 @@ public class TableUtils extends AbstractSnmpUtility {
                                         userObject,
                                         lowerBoundIndex,
                                         upperBoundIndex);
-    req.sendNextChunk();
+    boolean sendMore = req.sendNextChunk();
+    while (sendColumnPDUsMultiThreaded && sendMore) {
+      sendMore = req.sendNextChunk();
+    }
   }
 
   /**
@@ -313,6 +326,85 @@ public class TableUtils extends AbstractSnmpUtility {
     this.maxNumColumnsPerPDU = numberOfColumnsPerChunk;
   }
 
+  public boolean isSendColumnPDUsMultiThreaded() {
+    return sendColumnPDUsMultiThreaded;
+  }
+
+  public void setSendColumnPDUsMultiThreaded(boolean sendColumnPDUsMultiThreaded) {
+    this.sendColumnPDUsMultiThreaded = sendColumnPDUsMultiThreaded;
+  }
+
+  public boolean isCheckLexicographicOrdering() {
+      return checkLexicographicOrdering;
+  }
+
+  /**
+   * Gets the maximum number of rows with wrong lexicographic ordering whicb will be return on a table retrieval
+   * with {@link #isCheckLexicographicOrdering()} set to {@code true}.
+   * @return
+   *    the number of ignored row ordering errors.
+   *
+   * @since 2.5.11
+   */
+  public int getIgnoreMaxLexicographicRowOrderingErrors() {
+    return ignoreMaxLexicographicRowOrderingErrors;
+  }
+
+  /**
+   * Sets the maximum number of rows that will be returned with status {@link TableEvent#STATUS_WRONG_ORDER} before the
+   * table retrieval will be stopped. If this value is set to zero and lexicographic ordering check is enabled by
+   * {@link #setCheckLexicographicOrdering(boolean)}, then table retrieval finishes immediately when the error is
+   * detected. Otherwise retrieval continues until the maximum errors are detected and then the row cache will be
+   * returned too, although it may contain already incomplete rows based on correctly or incorrectly (!) ordered rows.
+   * The default value is three. That means, even if the ordering error occurs at the end of the table and
+   *
+   * @param ignoreMaxLexicographicRowOrderingErrors
+   *   the maximum numbers of rows with lexicographic ordering error to be returned before finishing table retrieval
+   *   automatically. Setting this value has no effect if {@link #isCheckLexicographicOrdering()} is {@code false}.
+   *
+   * @since 2.5.11
+   */
+  public void setIgnoreMaxLexicographicRowOrderingErrors(int ignoreMaxLexicographicRowOrderingErrors) {
+    this.ignoreMaxLexicographicRowOrderingErrors = ignoreMaxLexicographicRowOrderingErrors;
+  }
+
+  /**
+   * Enables or disables lexicographic ordering checks. By default, those checks are enabled, because otherwise
+   * with agents, that do not implement correct lexicographic ordering, endless looping could occur.
+   * @param checkLexicographicOrdering
+   *    {@code false} to disable checks which could increase performance.
+   * @since 2.5.10
+   */
+  public void setCheckLexicographicOrdering(boolean checkLexicographicOrdering) {
+      this.checkLexicographicOrdering = checkLexicographicOrdering;
+  }
+
+
+
+  protected class ColumnsOfRequest {
+    private List<Integer> columnIDs;
+    private int requestSerial;
+    private LastReceived lastReceived;
+
+    public ColumnsOfRequest(List<Integer> columnIDs, int requestSerial, LastReceived lastReceived) {
+      this.columnIDs = columnIDs;
+      this.requestSerial = requestSerial;
+      this.lastReceived = lastReceived;
+    }
+
+    public List<Integer> getColumnIDs() {
+      return columnIDs;
+    }
+
+    public int getRequestSerial() {
+      return requestSerial;
+    }
+
+    public LastReceived getLastReceived() {
+      return lastReceived;
+    }
+  }
+
   public class TableRequest implements ResponseListener {
 
     Target target;
@@ -326,7 +418,10 @@ public class TableUtils extends AbstractSnmpUtility {
     private boolean anyMatch = false;
     private Vector<OID> lastSent = null;
     private LinkedList<Row> rowCache = new LinkedList<Row>();
-    protected Vector<OID> lastReceived;
+    protected LastReceived lastReceived;
+    private int requestSerial = Integer.MIN_VALUE;
+    private List<Integer> requestSerialsPending = Collections.synchronizedList(new LinkedList<Integer>());
+    private int numLexicographicErrors = 0;
 
     volatile boolean finished = false;
 
@@ -340,7 +435,7 @@ public class TableUtils extends AbstractSnmpUtility {
       this.columnOIDs = columnOIDs;
       this.listener = listener;
       this.userObject = userObject;
-      this.lastReceived = new Vector<OID>(Arrays.asList(columnOIDs));
+      this.lastReceived = new LastReceived(Arrays.asList(columnOIDs));
       this.upperBoundIndex = upperBoundIndex;
       this.lowerBoundIndex = lowerBoundIndex;
       if (lowerBoundIndex != null) {
@@ -350,6 +445,17 @@ public class TableUtils extends AbstractSnmpUtility {
           lastReceived.set(i, oid);
         }
       }
+    }
+
+    /**
+     * Gets the number of lexicographic errors that occurred during request processing. Any errors occurred on the same
+     * row will be count as one error.
+     * @return
+     *    the number of rows returned by the agent in wrong lexicographic order (i.e. not strictly ascending).
+     * @since 2.5.11
+     */
+    public int getNumLexicographicErrors() {
+      return numLexicographicErrors;
     }
 
     public boolean sendNextChunk() {
@@ -402,7 +508,9 @@ public class TableUtils extends AbstractSnmpUtility {
         if (pdu.size() == 0) {
           return false;
         }
-        sendRequest(pdu, target, sentColumns);
+        ColumnsOfRequest columnsOfRequest = new ColumnsOfRequest(sentColumns, requestSerial++,
+                isCheckLexicographicOrdering() ? new LastReceived(lastReceived) : null);
+        sendRequest(pdu, target, columnsOfRequest);
       }
       catch (Exception ex) {
         logger.error(ex);
@@ -415,10 +523,25 @@ public class TableUtils extends AbstractSnmpUtility {
       return true;
     }
 
-    protected void sendRequest(PDU pdu, Target target, List<Integer> sendColumns)
+    protected void sendRequest(PDU pdu, Target target, ColumnsOfRequest sendColumns)
         throws IOException
     {
+      requestSerialsPending.add(sendColumns.getRequestSerial());
       session.send(pdu, target, sendColumns, this);
+    }
+
+    protected synchronized boolean removePending(int requestSerial) {
+      boolean inOrder = true;
+      for (Iterator<Integer> it = requestSerialsPending.iterator(); it.hasNext();) {
+        int pendingRequestSerial = it.next();
+        if (pendingRequestSerial == requestSerial) {
+          it.remove();
+        }
+        else {
+          inOrder = false;
+        }
+      }
+      return inOrder;
     }
 
     @SuppressWarnings("unchecked")
@@ -431,7 +554,8 @@ public class TableUtils extends AbstractSnmpUtility {
       synchronized (this) {
         if (checkResponse(event)) {
           boolean anyMatchInChunk = false;
-          List<Integer> colsOfRequest = (List<Integer>) event.getUserObject();
+          ColumnsOfRequest colsOfRequest = (ColumnsOfRequest) event.getUserObject();
+          boolean receivedInOrder = removePending(colsOfRequest.getRequestSerial());
           PDU request = event.getRequest();
           PDU response = event.getResponse();
           int cols = request.size();
@@ -440,8 +564,8 @@ public class TableUtils extends AbstractSnmpUtility {
           for (int r = 0; r < rows; r++) {
             Row row = null;
             anyMatchInChunk = false;
-            for (int c = 0; c < request.size(); c++) {
-              int pos = colsOfRequest.get(c);
+            for (int c = 0; c < cols; c++) {
+              int pos = colsOfRequest.getColumnIDs().get(c);
               VariableBinding vb = response.get(r * cols + c);
               if (vb.isException()) {
                 continue;
@@ -496,13 +620,6 @@ public class TableUtils extends AbstractSnmpUtility {
                     }
                   }
                 }
-                if (((!row.setNumComplete(pos)) ||
-                     (row.size() > pos)) && (row.get(pos) != null)) {
-                  finished = true;
-                  listener.finished(new TableEvent(this, userObject,
-                      TableEvent.STATUS_WRONG_ORDER));
-                  return;
-                }
                 row.setNumComplete(pos);
                 if (pos < row.getNumComplete()) {
                   row.set(pos, vb);
@@ -510,7 +627,27 @@ public class TableUtils extends AbstractSnmpUtility {
                 else {
                   row.add(vb);
                 }
-                lastReceived.set(pos, vb.getOid());
+                if (isCheckLexicographicOrdering()) {
+                  OID requested = event.getRequest().get(c).getOid();
+                  if (id.compareTo(requested) <= 0) {
+                    if (!row.orderError) {
+                      row.orderError = true;
+                    }
+                  }
+                  else if (colsOfRequest.lastReceived != null){
+                    try {
+                      Row baseRow = colsOfRequest.lastReceived.getColumnInfos().get(pos).getBasedOn();
+                      if (baseRow != null && baseRow.isOrderError()) {
+                        row.orderError = true;
+                      }
+                    }
+                    catch (Exception ex) {
+                      // ignore
+                    }
+                  }
+                  // check if current row is based on a wrong order row and mark it too
+                }
+                lastReceived.set(pos, vb.getOid(), row);
               }
               else {
                 lastReceived.set(pos, vb.getOid());
@@ -521,29 +658,51 @@ public class TableUtils extends AbstractSnmpUtility {
           while ((rowCache.size() > 0) &&
                  ((rowCache.getFirst()).getNumComplete() ==
                   columnOIDs.length) &&
+                  // make sure, row is not prematurely deemed complete
+                  (receivedInOrder) &&
                  ((lastMinIndex == null) ||
                   ((rowCache.getFirst()).getRowIndex().compareTo(
                       lastMinIndex) < 0))) {
-            if (!listener.next(getTableEvent())) {
+            TableEvent tableEvent = getTableEvent();
+            if (isCheckLexicographicOrdering() &&
+                    (tableEvent != null && tableEvent.status == TableEvent.STATUS_WRONG_ORDER &&
+                            numLexicographicErrors >= ignoreMaxLexicographicRowOrderingErrors)) {
+              if (ignoreMaxLexicographicRowOrderingErrors > 0) {
+                listener.next(tableEvent);
+              }
+              emptyCache();
               finished = true;
-              listener.finished(new TableEvent(this, userObject));
+              listener.finished(new TableEvent(this, userObject, TableEvent.STATUS_WRONG_ORDER));
+              return;
+            }
+            else if (tableEvent == null || !listener.next(tableEvent)) {
+              emptyCache();
+              finished = true;
+              listener.finished(new TableEvent(this, userObject, getTableStatus()));
               return;
             }
           }
-          if (!sendNextChunk()) {
-            if (anyMatch) {
-              sent = 0;
-              anyMatch = false;
-              sendNextChunk();
-            }
-            else {
-              emptyCache();
-              finished = true;
-              listener.finished(new TableEvent(this, userObject));
+          if (receivedInOrder) {
+            boolean sentChunk;
+            if (!(sentChunk = sendNextChunk())) {
+              if (anyMatch) {
+                sent = 0;
+                anyMatch = false;
+                sentChunk = sendNextChunk();
+              }
+              if (!sentChunk) {
+                emptyCache();
+                finished = true;
+                listener.finished(new TableEvent(this, userObject, getTableStatus()));
+              }
             }
           }
         }
       }
+    }
+
+    protected int getTableStatus() {
+      return numLexicographicErrors > 0 ? TableEvent.STATUS_WRONG_ORDER : TableEvent.STATUS_OK;
     }
 
     protected boolean checkResponse(ResponseEvent event) {
@@ -579,19 +738,34 @@ public class TableUtils extends AbstractSnmpUtility {
 
     private void emptyCache() {
       while (rowCache.size() > 0) {
-        if (!listener.next(getTableEvent())) {
-          break;
+        TableEvent tableEvent = getTableEvent();
+        if (tableEvent == null) {
+          continue;
+        }
+        if (tableEvent.getStatus() != TableEvent.STATUS_WRONG_ORDER ||
+                numLexicographicErrors <= ignoreMaxLexicographicRowOrderingErrors) {
+          if (!listener.next(tableEvent)) {
+            break;
+          }
         }
       }
     }
 
     private TableEvent getTableEvent() {
+      if (rowCache.isEmpty()) {
+        return null;
+      }
       Row r = rowCache.removeFirst();
       r.setNumComplete(columnOIDs.length);
       VariableBinding[] vbs = new VariableBinding[r.size()];
       r.copyInto(vbs);
-      return new TableEvent(this, userObject, r.getRowIndex(), vbs);
-    }
+      TableEvent tableEvent = new TableEvent(this, userObject, r.getRowIndex(), vbs);
+      if (r.isOrderError()) {
+        tableEvent.status = TableEvent.STATUS_WRONG_ORDER;
+        numLexicographicErrors++;
+      }
+      return tableEvent;
+     }
 
     public Row getRow(OID index) {
       for (ListIterator<Row> it = rowCache.listIterator(rowCache.size() + 1);
@@ -785,15 +959,81 @@ public class TableUtils extends AbstractSnmpUtility {
     return null;
   }
 
+  class LastReceived {
+
+    private List<LastReceivedColumnInfo> columnInfos;
+
+    public LastReceived(LastReceived otherLastReceid) {
+      this.columnInfos = new ArrayList<LastReceivedColumnInfo>(otherLastReceid.size());
+      for (LastReceivedColumnInfo columnInfo : otherLastReceid.columnInfos) {
+        this.columnInfos.add(columnInfo);
+      }
+    }
+
+    public LastReceived(List<OID> plainColumnInfos) {
+      this.columnInfos = new ArrayList<LastReceivedColumnInfo>(plainColumnInfos.size());
+      for (OID columnOID : plainColumnInfos) {
+        columnInfos.add(new LastReceivedColumnInfo(columnOID, null));
+      }
+    }
+
+    public void setColumnInfos(List<LastReceivedColumnInfo> columnInfos) {
+      this.columnInfos = columnInfos;
+    }
+
+    public List<LastReceivedColumnInfo> getColumnInfos() {
+      return columnInfos;
+    }
+
+    public int size() {
+      return columnInfos.size();
+    }
+
+    public OID get(int i) {
+      return columnInfos.get(i).getOid();
+    }
+
+    public void set(int i, OID oid) {
+      columnInfos.set(i, new LastReceivedColumnInfo(oid, null));
+    }
+
+    public void set(int i, OID oid, Row baseRow) {
+      columnInfos.set(i, new LastReceivedColumnInfo(oid, baseRow));
+    }
+  }
+
+  class LastReceivedColumnInfo {
+    private OID oid;
+    private Row basedOn;
+
+    public LastReceivedColumnInfo(OID oid, Row basedOn) {
+      this.oid = oid;
+      this.basedOn = basedOn;
+    }
+
+    public OID getOid() {
+      return oid;
+    }
+
+    public Row getBasedOn() {
+      return basedOn;
+    }
+  }
+
   class Row extends Vector<VariableBinding> {
 
     private static final long serialVersionUID = -2297277440117636627L;
 
     private OID index;
+    private boolean orderError;
 
     public Row(OID index) {
       super();
       this.index = index;
+    }
+
+    public boolean isOrderError() {
+      return orderError;
     }
 
     public OID getRowIndex() {

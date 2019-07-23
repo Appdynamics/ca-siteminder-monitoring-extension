@@ -1,15 +1,29 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - TLSTM.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 package org.snmp4j.transport;
 
 import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.TransportStateReference;
+import org.snmp4j.asn1.BER;
+import org.snmp4j.asn1.BERInputStream;
 import org.snmp4j.event.CounterEvent;
 import org.snmp4j.log.LogAdapter;
 import org.snmp4j.log.LogFactory;
@@ -33,10 +47,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.security.*;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateParsingException;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -44,20 +55,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * The <code>TLSTM</code> implements the Transport Layer Security
  * Transport Mapping (TLS-TM) as defined by RFC 5953
- * with the new IO API and {@link SSLEngine}.
+ * with the new IO API and {@link javax.net.ssl.SSLEngine}.
  * <p>
  * It uses a single thread for processing incoming and outgoing messages.
  * The thread is started when the <code>listen</code> method is called, or
  * when an outgoing request is sent using the <code>sendMessage</code> method.
  *
  * @author Frank Fock
- * @version 2.0
+ * @version 2.6.4
  * @since 2.0
  */
 public class TLSTM extends TcpTransportMapping {
 
-  private static final LogAdapter logger =
-      LogFactory.getLogger(TLSTM.class);
+  private static final LogAdapter logger = LogFactory.getLogger(TLSTM.class);
+  public static final int TLS_MAX_FRAGMENT_SIZE = 16384;
 
   private Map<Address, SocketEntry> sockets = new Hashtable<Address, SocketEntry>();
   private WorkerTask server;
@@ -82,8 +93,11 @@ public class TLSTM extends TcpTransportMapping {
   private String localCertificateAlias;
   private String keyStore;
   private String keyStorePassword;
+  private String trustStore;
+  private String trustStorePassword;
   private String[] tlsProtocols;
   private TLSTMTrustManagerFactory trustManagerFactory = new DefaultTLSTMTrustManagerFactory();
+  private int tlsMaxFragmentSize = TLS_MAX_FRAGMENT_SIZE;
 
   /**
    * Creates a default TCP transport mapping with the server for incoming
@@ -99,10 +113,12 @@ public class TLSTM extends TcpTransportMapping {
 
   /**
    * Creates a TLS transport mapping with the server for incoming
-   * messages bind to the given address. The <code>securityCallback</code>
+   * messages bind to the given address. The {@code securityCallback}
    * needs to be specified before {@link #listen()} is called.
    *
-   * @throws IOException
+   * @param address
+   *    the address to bind for incoming requests.
+   * @throws java.io.IOException
    *    on failure of binding a local port.
    */
   public TLSTM(TlsAddress address)
@@ -131,7 +147,7 @@ public class TLSTM extends TcpTransportMapping {
       throw new IOException("Failed to setup TLSTMTrustManagerFactory: "+ex.getMessage(), ex);
     }
     catch (IllegalAccessException ex) {
-      throw new IOException("Failed to init TLSTMTrustManagerFactory: "+ex.getMessage(), ex);
+      throw new IOException("Failed to access TLSTMTrustManagerFactory: "+ex.getMessage(), ex);
     }
     catch (InstantiationException ex) {
       throw new IOException("Failed to instantiate TLSTMTrustManagerFactory: "+ex.getMessage(), ex);
@@ -147,7 +163,7 @@ public class TLSTM extends TcpTransportMapping {
    * @param serverAddress
    *    the TcpAddress instance that describes the server address to listen
    *    on incoming connection requests.
-   * @throws IOException
+   * @throws java.io.IOException
    *    if the given address cannot be bound.
    */
   public TLSTM(TlsTmSecurityCallback<X509Certificate> securityCallback,
@@ -169,7 +185,7 @@ public class TLSTM extends TcpTransportMapping {
    *    The CounterSupport instance to be used to count events created by this
    *    TLSTM instance. To get a default instance, use
    *    {@link CounterSupport#getInstance()}.
-   * @throws IOException
+   * @throws java.io.IOException
    *    if the given address cannot be bound.
    */
   public TLSTM(TlsTmSecurityCallback<X509Certificate> securityCallback,
@@ -235,14 +251,14 @@ public class TLSTM extends TcpTransportMapping {
 
   /**
    * Sets the certificate alias used for client and server authentication
-   * by this TLSTM. Setting this property to a value other than <code>null</code>
+   * by this TLSTM. Setting this property to a value other than {@code null}
    * filters out any certificates which are not in the chain of the given
    * alias.
    *
    * @param localCertificateAlias
    *    a certificate alias which filters a single certification chain from
-   *    the <code>javax.net.ssl.keyStore</code> key store to be used to
-   *    authenticate this TLS transport mapping. If <code>null</code> no
+   *    the {@code javax.net.ssl.keyStore} key store to be used to
+   *    authenticate this TLS transport mapping. If {@code null} no
    *    filtering appears, which could lead to more than a single chain
    *    available for authentication by the peer, which would violate the
    *    TLSTM standard requirements.
@@ -287,12 +303,13 @@ public class TLSTM extends TcpTransportMapping {
   }
 
   /**
-   * Listen for incoming and outgoing requests. If the <code>serverEnabled</code>
-   * member is <code>false</code> the server for incoming requests is not
+   * Listen for incoming and outgoing requests. If the {@code serverEnabled}
+   * member is {@code false} the server for incoming requests is not
    * started. This starts the internal server thread that processes messages.
-   * @throws SocketException
+   * @throws java.net.SocketException
    *    when the transport is already listening for incoming/outgoing messages.
-   * @throws IOException
+   * @throws java.io.IOException
+   *    if the listen port could not be bound to the server thread.
    */
   public synchronized void listen() throws IOException {
     if (server != null) {
@@ -300,6 +317,9 @@ public class TLSTM extends TcpTransportMapping {
     }
     try {
       serverThread = new ServerThread();
+      if (logger.isInfoEnabled()) {
+        logger.info("TCP address "+getListenAddress()+" bound successfully");
+      }
     } catch (NoSuchAlgorithmException e) {
       throw new IOException("SSL not available: "+e.getMessage(), e);
     }
@@ -331,7 +351,7 @@ public class TLSTM extends TcpTransportMapping {
   /**
    * Returns the name of the listen thread.
    * @return
-   *    the thread name if in listening mode, otherwise <code>null</code>.
+   *    the thread name if in listening mode, otherwise {@code null}.
    * @since 1.6
    */
   public String getThreadName() {
@@ -401,9 +421,9 @@ public class TLSTM extends TcpTransportMapping {
    * @param remoteAddress
    *    the address of the peer socket.
    * @return
-   *    <code>true</code> if the connection has been closed and
-   *    <code>false</code> if there was nothing to close.
-   * @throws IOException
+   *    {@code true} if the connection has been closed and
+   *    {@code false} if there was nothing to close.
+   * @throws java.io.IOException
    *    if the remote address cannot be closed due to an IO exception.
    * @since 1.7.1
    */
@@ -436,14 +456,15 @@ public class TLSTM extends TcpTransportMapping {
   /**
    * Sends a SNMP message to the supplied address.
    * @param address
-   *    an <code>TcpAddress</code>. A <code>ClassCastException</code> is thrown
-   *    if <code>address</code> is not a <code>TcpAddress</code> instance.
+   *    an {@code TcpAddress}. A {@code ClassCastException} is thrown
+   *    if {@code address} is not a {@code TcpAddress} instance.
    * @param message byte[]
    *    the message to sent.
    * @param tmStateReference
    *    the (optional) transport model state reference as defined by
    *    RFC 5590 section 6.1.
-   * @throws IOException
+   * @throws java.io.IOException
+   *    if an IO exception occurs while trying to send the message.
    */
   public void sendMessage(TcpAddress address, byte[] message,
                           TransportStateReference tmStateReference)
@@ -496,7 +517,7 @@ public class TLSTM extends TcpTransportMapping {
    * until the {@link #listen()} method is called (if the transport is already
    * listening, {@link #close()} has to be called before).
    * @param serverEnabled
-   *    if <code>true</code> if the transport will listens for incoming
+   *    if {@code true} if the transport will listens for incoming
    *    requests after {@link #listen()} has been called.
    */
   public void setServerEnabled(boolean serverEnabled) {
@@ -538,7 +559,9 @@ public class TLSTM extends TcpTransportMapping {
 
   private synchronized void timeoutSocket(SocketEntry entry) {
     if (connectionTimeout > 0) {
-      socketCleaner.schedule(new SocketTimeout(entry), connectionTimeout);
+      SocketTimeout socketTimeout = new SocketTimeout(entry);
+      entry.setSocketTimeout(socketTimeout);
+      socketCleaner.schedule(socketTimeout, connectionTimeout);
     }
   }
 
@@ -552,6 +575,9 @@ public class TLSTM extends TcpTransportMapping {
       String algo = cert.getSigAlgName();
       if (algo.contains("with")) {
         algo = algo.substring(0, algo.indexOf("with"));
+        if (algo.startsWith("SHA") && !algo.contains("-")) {
+          algo = "SHA-"+algo.substring(3);
+        }
       }
       MessageDigest md = MessageDigest.getInstance(algo);
       md.update(cert.getEncoded());
@@ -578,11 +604,24 @@ public class TLSTM extends TcpTransportMapping {
     return null;
   }
 
+  @Override
+  public TcpAddress getListenAddress() {
+    int port = tcpAddress.getPort();
+    ServerThread serverThreadCopy = serverThread;
+    try {
+      port = serverThreadCopy.ssc.socket().getLocalPort();
+    }
+    catch (NullPointerException npe) {
+      // ignore
+    }
+    return new TcpAddress(tcpAddress.getInetAddress(), port);
+  }
+
   /**
    * Sets optional server socket options. The default implementation does
    * nothing.
    * @param serverSocket
-   *    the <code>ServerSocket</code> to apply additional non-default options.
+   *    the {@code ServerSocket} to apply additional non-default options.
    */
   protected void setSocketOptions(ServerSocket serverSocket) {
   }
@@ -604,6 +643,8 @@ public class TLSTM extends TcpTransportMapping {
 
     private final Object outboundLock = new Object();
     private final Object inboundLock = new Object();
+
+    private SocketTimeout socketTimeout;
 
     public SocketEntry(TcpAddress address, Socket socket,
                        boolean useClientMode,
@@ -712,24 +753,16 @@ public class TLSTM extends TcpTransportMapping {
           ",inNetBuffer="+inNetBuffer+
           ",inAppBuffer="+inAppBuffer+
           ",outNetBuffer="+outNetBuffer+
-          "]";
+          ",socketTimeout="+socketTimeout+"]";
     }
 
-    /*
-    public boolean equals(Object o) {
-      if (o instanceof SocketEntry) {
-        SocketEntry other = (SocketEntry)o;
-        return other.peerAddress.equals(peerAddress) &&
-            ((other.message == message) ||
-             ((message != null) && (message.equals(other.message))));
-      }
-      return false;
+    public SocketTimeout getSocketTimeout() {
+      return socketTimeout;
     }
 
-    public int hashCode() {
-      return peerAddress.hashCode();
+    public void setSocketTimeout(SocketTimeout socketTimeout) {
+      this.socketTimeout = socketTimeout;
     }
-*/
 
     public void checkTransportStateReference() {
       if (tmStateReference == null) {
@@ -752,6 +785,8 @@ public class TLSTM extends TcpTransportMapping {
       else if (tmStateReference.getTransportSecurityLevel().equals(SecurityLevel.undefined)) {
         tmStateReference.setTransportSecurityLevel(SecurityLevel.authPriv);
       }
+
+
     }
 
     public void setInAppBuffer(ByteBuffer inAppBuffer) {
@@ -794,30 +829,6 @@ public class TLSTM extends TcpTransportMapping {
       } catch (IOException e) {
         logger.error("IOException while closing outbound channel of " + this + ": " + e.getMessage(), e);
       }
-      /*
-      if (sslEngine.isOutboundDone()) {
-        // try to receive close alert message
-        SSLEngineResult result;
-        try {
-          int i=0;
-          do {
-            synchronized (this.inboundLock) {
-              this.inNetBuffer.flip();
-              this.inNetBuffer.limit(this.inNetBuffer.capacity());
-              logger.debug("TLS inNetBuffer = "+this.inNetBuffer);
-              result =
-                  this.sslEngine.unwrap(this.inNetBuffer, this.inAppBuffer);
-//              adjustInNetBuffer(this, result);
-            }
-          }
-          while ((result.getStatus() != SSLEngineResult.Status.CLOSED) && (i++ < 5) && !sslEngine.isInboundDone() &&
-                 (result.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP));
-          sslEngine.closeInbound();
-        } catch (SSLException e) {
-          logger.error("SSLException while closing inbound channel of " + this + ": " + e.getMessage(), e);
-        }
-      }
-      */
     }
   }
 
@@ -859,7 +870,9 @@ public class TLSTM extends TcpTransportMapping {
         if (logger.isDebugEnabled()) {
           logger.debug("Scheduling " + nextRun);
         }
-        socketCleaner.schedule(new  SocketTimeout(entry), nextRun);
+        SocketTimeout socketTimeout = new SocketTimeout(entry);
+        entry.setSocketTimeout(socketTimeout);
+        socketCleaner.schedule(socketTimeout, nextRun);
       }
     }
 
@@ -931,36 +944,43 @@ public class TLSTM extends TcpTransportMapping {
           try {
             entry = inQueue.take();
             synchronized (entry.inboundLock) {
-              entry.inNetBuffer.flip();
-              logger.debug("TLS inNetBuffer = "+entry.inNetBuffer);
-              SSLEngineResult nextResult =
-                  entry.sslEngine.unwrap(entry.inNetBuffer, entry.inAppBuffer);
-              adjustInNetBuffer(entry, nextResult);
-              if (runDelegatedTasks(nextResult, entry)) {
-                switch (nextResult.getStatus()) {
-                  case BUFFER_UNDERFLOW:
-                    entry.inNetBuffer.limit(entry.inNetBuffer.capacity());
-                    entry.addRegistration(selector, SelectionKey.OP_READ);
-                    break;
-                  case BUFFER_OVERFLOW:
-                    // TODO
-                    break;
-                  case CLOSED:
-                    continue;
-                  case OK:
-                    if (entry.isAppOutPending()) {
-                      // we have a message to send
-                      writeMessage(entry, entry.getSocket().getChannel());
-                    }
-                    entry.inAppBuffer.flip();
-                    logger.debug("Dispatching inAppBuffer="+entry.inAppBuffer);
-                    if (entry.inAppBuffer.limit() > 0) {
-                      dispatchMessage(entry.getPeerAddress(),
-                          entry.inAppBuffer, entry.inAppBuffer.limit(),
-                          entry.sessionID, entry.tmStateReference);
-                    }
-                    entry.inAppBuffer.clear();
+              // Is there any data to read?
+              if (entry.getInNetBuffer().position() > 0) {
+                entry.inNetBuffer.flip();
+                logger.debug("TLS inNetBuffer = " + entry.inNetBuffer);
+                SSLEngineResult nextResult =
+                        entry.sslEngine.unwrap(entry.inNetBuffer, entry.inAppBuffer);
+                adjustInNetBuffer(entry, nextResult);
+                if (runDelegatedTasks(nextResult, entry)) {
+                  switch (nextResult.getStatus()) {
+                    case BUFFER_UNDERFLOW:
+                      entry.inNetBuffer.position(entry.inNetBuffer.limit());
+                      entry.inNetBuffer.limit(entry.inNetBuffer.capacity());
+                      entry.addRegistration(selector, SelectionKey.OP_READ);
+                      break;
+                    case BUFFER_OVERFLOW:
+                      // TODO
+                      break;
+                    case CLOSED:
+                      continue;
+                    case OK:
+                      if (entry.isAppOutPending()) {
+                        // we have a message to send
+                        writeMessage(entry, entry.getSocket().getChannel());
+                      }
+                      entry.inAppBuffer.flip();
+                      logger.debug("Dispatching inAppBuffer=" + entry.inAppBuffer);
+                      if (entry.inAppBuffer.limit() > 0) {
+                        dispatchMessage(entry.getPeerAddress(),
+                                entry.inAppBuffer, entry.inAppBuffer.limit(),
+                                entry.sessionID, entry.tmStateReference);
+                      }
+                      entry.inAppBuffer.clear();
+                  }
                 }
+              }
+              else {
+                entry.addRegistration(selector, SelectionKey.OP_READ);
               }
             }
           } catch (IOException iox) {
@@ -1044,11 +1064,10 @@ public class TLSTM extends TcpTransportMapping {
      * @param entry
      *    the session to use.
      * @return
-     *    <code>true</code> if processing of delegated tasks has been
-     *    finished, <code>false</code> otherwise.
+     *    {@code true} if processing of delegated tasks has been
+     *    finished, {@code false} otherwise.
      */
-    public boolean runDelegatedTasks(SSLEngineResult result,
-                                     SocketEntry entry) throws IOException {
+    public boolean runDelegatedTasks(SSLEngineResult result, SocketEntry entry) throws IOException {
       if (logger.isDebugEnabled()) {
         logger.debug("Running delegated task on "+entry+": "+result);
       }
@@ -1065,22 +1084,24 @@ public class TLSTM extends TcpTransportMapping {
         }
         logger.info("Handshake status = " + status);
       }
-      System.err.println("TASK:"+result);
       switch (result.getStatus()) {
         case BUFFER_UNDERFLOW:
+          entry.inNetBuffer.position(entry.inNetBuffer.limit());
           entry.inNetBuffer.limit(entry.inNetBuffer.capacity());
           entry.addRegistration(selector, SelectionKey.OP_READ);
           return false;
         case CLOSED:
           return false;
       }
-	    switch (status) {
+      switch (status) {
         case NEED_WRAP:
           outQueue.add(entry);
 //          entry.addRegistration(selector, SelectionKey.OP_WRITE);
           break;
         case NEED_UNWRAP:
-          logger.debug("NEED_UNRWAP processing with inNetBuffer="+entry.inNetBuffer);
+          if (logger.isDebugEnabled()) {
+            logger.debug("NEED_UNRWAP processing with inNetBuffer=" + entry.inNetBuffer);
+          }
           inQueue.add(entry);
           entry.addRegistration(selector, SelectionKey.OP_READ);
           break;
@@ -1132,8 +1153,7 @@ public class TLSTM extends TcpTransportMapping {
       }
       if ((s == null) || (s.isClosed()) || (!s.isConnected())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("Socket for address '"+address+
-                       "' is closed, opening it...");
+          logger.debug("Socket for address '"+address+ "' is closed, opening it...");
         }
         synchronized (pending) {
           pending.remove(entry);
@@ -1443,7 +1463,6 @@ public class TLSTM extends TcpTransportMapping {
       ByteBuffer inAppBuffer = entry.getInAppBuffer();
       try {
         long bytesRead = readChannel.read(inNetBuffer);
-        inNetBuffer.flip();
         if (logger.isDebugEnabled()) {
           logger.debug("Read " + bytesRead + " bytes from " + incomingAddress);
           logger.debug("TLS inNetBuffer: "+inNetBuffer);
@@ -1461,42 +1480,57 @@ public class TLSTM extends TcpTransportMapping {
           fireConnectionStateChanged(e);
           return;
         }
-        if (bytesRead == 0) {
-          entry.inNetBuffer.clear();
-          //entry.addRegistration(selector, SelectionKey.OP_READ);
-        }
-        else {
+        if (bytesRead > 0) {
           SSLEngineResult result;
           synchronized (entry.inboundLock) {
-            result = entry.sslEngine.unwrap(inNetBuffer, inAppBuffer);
-            adjustInNetBuffer(entry, result);
-            switch (result.getStatus()) {
-/*
-              case BUFFER_UNDERFLOW:
-                entry.addRegistration(selector, SelectionKey.OP_READ);
-                return;
-*/
-              case BUFFER_OVERFLOW:
-                // TODO handle overflow
-                System.err.println("BUFFER_OVERFLOW");
-                throw new IOException("BUFFER_OVERFLOW");
-            }
-            if (runDelegatedTasks(result, entry)) {
-              logger.info("SSL session established");
-              if (result.bytesProduced() > 0) {
-                entry.inAppBuffer.flip();
-                logger.debug("SSL established, dispatching inappBuffer="+entry.inAppBuffer);
-                // SSL session is established
-                entry.checkTransportStateReference();
-                dispatchMessage(incomingAddress, inAppBuffer, inAppBuffer.limit(),
-                                entry.sessionID,
-                                entry.tmStateReference);
-                entry.getInAppBuffer().clear();
+            do {
+              inNetBuffer.flip();
+              result = entry.sslEngine.unwrap(inNetBuffer, inAppBuffer);
+              adjustInNetBuffer(entry, result);
+              switch (result.getStatus()) {
+                case BUFFER_OVERFLOW:
+                  // TODO handle overflow
+                  throw new IOException("BUFFER_OVERFLOW");
               }
-              else if (entry.isAppOutPending()) {
-                writeMessage(entry, entry.getSocket().getChannel());
+              if (runDelegatedTasks(result, entry)) {
+                if (result.bytesProduced() > 0) {
+                  entry.inAppBuffer.flip();
+                  if (logger.isDebugEnabled()) {
+                    logger.debug("Reading inappBuffer=" + entry.inAppBuffer);
+                  }
+                  // SSL session is established
+                  if (entry.inAppBuffer.remaining() % tlsMaxFragmentSize == 0) {
+                    if (logger.isDebugEnabled()) {
+                      logger.debug("Checking PDU header for fragmented message: " + entry);
+                    }
+                    try {
+                      BER.decodeHeader(new BERInputStream(entry.inAppBuffer.asReadOnlyBuffer()),
+                              new BER.MutableByte(), true);
+                    } catch (IOException iox) {
+                      entry.inAppBuffer.position(entry.inAppBuffer.limit());
+                      entry.inAppBuffer.limit(entry.inAppBuffer.capacity());
+                      // wait to get rest of the PDU first
+                      if (logger.isDebugEnabled()) {
+                        logger.debug("Waiting for rest of packet because: " + iox.getMessage() +
+                                ", inAppBuffer=" + entry.inAppBuffer);
+                      }
+                      continue;
+                    }
+                  }
+                  entry.checkTransportStateReference();
+                  dispatchMessage(incomingAddress, inAppBuffer, inAppBuffer.limit(),
+                          entry.sessionID,
+                          entry.tmStateReference);
+                  entry.getInAppBuffer().clear();
+                  break;
+                } else if (entry.isAppOutPending()) {
+                  writeMessage(entry, entry.getSocket().getChannel());
+                }
               }
-            }
+              else {
+                break;
+              }
+            } while (inNetBuffer.position() > 0 && inNetBuffer.remaining() > 0);
           }
         }
       }
@@ -1506,7 +1540,6 @@ public class TLSTM extends TcpTransportMapping {
           logger.debug("Read channel not open, no bytes read from " +
                        incomingAddress);
         }
-        return;
       }
     }
 
@@ -1547,71 +1580,61 @@ public class TLSTM extends TcpTransportMapping {
     private void writeMessage(SocketEntry entry, SocketChannel sc) throws
         IOException {
       synchronized (entry.outboundLock) {
-        if (entry.outAppBuffer == null) {
-          byte[] message = entry.nextMessage();
-          if (message != null) {
-            entry.outAppBuffer = ByteBuffer.wrap(message);
-            if (logger.isDebugEnabled()) {
-              logger.debug("Sending message with length " +
-                           message.length + " to " +
-                           entry.getPeerAddress() + ": " +
-                           new OctetString(message).toHexString());
+        boolean sendNextFragment = false;
+        do {
+          sendNextFragment = false;
+          int offset = 0;
+          if (entry.outAppBuffer == null) {
+            byte[] message = entry.nextMessage();
+            if (message != null) {
+              entry.outAppBuffer = ByteBuffer.wrap(message);
+              if (logger.isDebugEnabled()) {
+                logger.debug("Sending message with length " +
+                        message.length + " to " +
+                        entry.getPeerAddress() + ": " +
+                        new OctetString(message).toHexString());
+              }
+            } else {
+              entry.removeRegistration(selector, SelectionKey.OP_WRITE);
+              // Make sure that we did not clear a selection key that was concurrently
+              // added:
+              if (entry.hasMessage() &&
+                      !entry.isRegistered(SelectionKey.OP_WRITE)) {
+                entry.addRegistration(selector, SelectionKey.OP_WRITE);
+                logger.debug("Waking up selector");
+                selector.wakeup();
+              }
+              entry.addRegistration(selector, SelectionKey.OP_READ);
+              return;
             }
           }
           else {
-            entry.removeRegistration(selector, SelectionKey.OP_WRITE);
-            // Make sure that we did not clear a selection key that was concurrently
-            // added:
-            if (entry.hasMessage() &&
-                !entry.isRegistered(SelectionKey.OP_WRITE)) {
-              entry.addRegistration(selector, SelectionKey.OP_WRITE);
-              logger.debug("Waking up selector");
-              selector.wakeup();
+            offset = entry.outAppBuffer.position();
+          }
+          SSLEngineResult result;
+          result = entry.sslEngine.wrap(entry.outAppBuffer, entry.outNetBuffer);
+          if (result.getStatus() == SSLEngineResult.Status.OK) {
+            if (result.bytesProduced() > 0) {
+              writeNetBuffer(entry, sc);
             }
-            entry.addRegistration(selector, SelectionKey.OP_READ);
-            return;
+          } else if (runDelegatedTasks(result, entry)) {
+            logger.debug("SSL session OK");
+  /*
+            if (entry.isAppOutPending()) {
+              writeMessage(entry, entry.getSocket().getChannel());
+            }
+            */
           }
-        }
-        SSLEngineResult result;
-        result = entry.sslEngine.wrap(entry.outAppBuffer, entry.outNetBuffer);
-        if (result.getStatus() == SSLEngineResult.Status.OK) {
-          if (result.bytesProduced() > 0) {
-            writeNetBuffer(entry, sc);
+          if (result.bytesConsumed() >= entry.outAppBuffer.limit() - offset) {
+            logger.debug("Payload sent completely");
+            entry.outAppBuffer = null;
+          } else if (result.bytesConsumed() > 0) {
+            logger.debug("Fragment of size " + result.bytesConsumed() + " sent: " + entry);
+            sendNextFragment = true;
           }
-        }
-        else if (runDelegatedTasks(result, entry)) {
-          logger.debug("SSL session OK");
-/*
-          if (entry.isAppOutPending()) {
-            writeMessage(entry, entry.getSocket().getChannel());
-          }
-          */
-        }
-        if (result.bytesConsumed() >= entry.outAppBuffer.limit()) {
-          logger.debug("Payload sent completely");
-          entry.outAppBuffer = null;
-        }
+        } while (sendNextFragment);
       }
       entry.addRegistration(selector, SelectionKey.OP_READ);
-    }
-
-    private void writeNetBuffer(SocketEntry entry, SocketChannel sc) throws IOException {
-      entry.outNetBuffer.flip();
-      // Send SSL/TLS encoded data to peer
-      while (entry.outNetBuffer.hasRemaining()) {
-        logger.debug("Writing TLS outNetBuffer(PAYLOAD): "+entry.outNetBuffer);
-        int num = sc.write(entry.outNetBuffer);
-        logger.debug("Wrote TLS "+num+" bytes from outNetBuffer(PAYLOAD)");
-        if (num == -1) {
-          throw new IOException("TLS connection closed");
-        }
-        else if (num == 0) {
-          entry.outNetBuffer.compact();
-          //entry.outNetBuffer.limit(entry.outNetBuffer.capacity());
-          return;
-        }
-      }
-      entry.outNetBuffer.clear();
     }
 
     public void close() {
@@ -1642,6 +1665,24 @@ public class TLSTM extends TcpTransportMapping {
       }
       selector.wakeup();
     }
+  }
+
+  void writeNetBuffer(SocketEntry entry, SocketChannel sc) throws IOException {
+    entry.outNetBuffer.flip();
+    // Send SSL/TLS encoded data to peer
+    while (entry.outNetBuffer.hasRemaining()) {
+      logger.debug("Writing TLS outNetBuffer(PAYLOAD): "+entry.outNetBuffer);
+      int num = sc.write(entry.outNetBuffer);
+      logger.debug("Wrote TLS "+num+" bytes from outNetBuffer(PAYLOAD)");
+      if (num == -1) {
+        throw new IOException("TLS connection closed");
+      }
+      else if (num == 0) {
+        entry.outNetBuffer.compact();
+        return;
+      }
+    }
+    entry.outNetBuffer.clear();
   }
 
   private boolean matchingStateReferences(TransportStateReference tmStateReferenceNew,
@@ -1678,7 +1719,30 @@ public class TLSTM extends TcpTransportMapping {
     return result;
   }
 
-  static interface SSLEngineConfigurator {
+  public String getTrustStore() {
+    if (trustStore == null) {
+      return System.getProperty("javax.net.ssl.trustStore");
+    }
+    return trustStore;
+  }
+
+  public void setTrustStore(String trustStore) {
+    this.trustStore = trustStore;
+  }
+
+  public String getTrustStorePassword() {
+    if (trustStorePassword == null) {
+      return System.getProperty("javax.net.ssl.trustStorePassword");
+    }
+    return trustStorePassword;
+  }
+
+  public void setTrustStorePassword(String trustStorePassword) {
+    this.trustStorePassword = trustStorePassword;
+  }
+
+
+  interface SSLEngineConfigurator {
     /**
      * Configure the supplied SSLEngine for TLS.
      * Configuration includes enabled protocol(s),
@@ -1692,7 +1756,7 @@ public class TLSTM extends TcpTransportMapping {
     /**
      * Gets the SSLContext for this SSL connection.
      * @param useClientMode
-     *    <code>true</code> if the connection is established in client mode.
+     *    {@code true} if the connection is established in client mode.
      * @param transportStateReference
      *    the transportStateReference with additional
      *    security information for the SSL connection
@@ -1746,12 +1810,12 @@ public class TLSTM extends TcpTransportMapping {
             TrustManagerFactory.getInstance("SunPKIX");
         // use default keystore
         try {
+          FileInputStream fisKeyStore = new FileInputStream(getKeyStore());
+          FileInputStream fisTrustStore = new FileInputStream(getTrustStore());
           KeyStore ks = KeyStore.getInstance("JKS");
-          FileInputStream fis =
-              new FileInputStream(getKeyStore());
-          ks.load(fis, (getKeyStorePassword()  != null) ? getKeyStorePassword().toCharArray() : null);
+          ks.load(fisKeyStore, (getKeyStorePassword() != null) ? getKeyStorePassword().toCharArray() : null);
           if (logger.isInfoEnabled()) {
-            logger.info("KeyStore '"+fis+"' contains: "+Collections.list(ks.aliases()));
+            logger.info("KeyStore '"+getKeyStore()+"' contains: "+Collections.list(ks.aliases()));
           }
 
           filterCertificates(ks, transportStateReference);
@@ -1760,7 +1824,12 @@ public class TLSTM extends TcpTransportMapping {
           KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
           kmf.init(ks, (getKeyStorePassword()  != null) ? getKeyStorePassword().toCharArray() : null);
 
-          tmf.init(ks);
+          KeyStore ts = KeyStore.getInstance("JKS");
+          ts.load(fisTrustStore, (getTrustStorePassword() != null) ? getTrustStorePassword().toCharArray() : null);
+          if (logger.isInfoEnabled()) {
+            logger.info("TrustStore '" + trustStore + "' contains: " + Collections.list(ts.aliases()));
+          }
+          tmf.init(ts);
           trustManagers = tmf.getTrustManagers();
           if (logger.isDebugEnabled()) {
             logger.debug("SSL context initializing with TrustManagers: " + Arrays.asList(trustManagers) +
@@ -1815,7 +1884,7 @@ public class TLSTM extends TcpTransportMapping {
             }
             // now delete all others from key store
             for (String alias : Collections.list(ks.aliases())) {
-              if (chainAliases.contains(alias)) {
+              if (!chainAliases.contains(alias)) {
                 ks.deleteEntry(alias);
               }
             }
@@ -1972,11 +2041,12 @@ public class TLSTM extends TcpTransportMapping {
   }
 
   private void adjustInNetBuffer(SocketEntry entry, SSLEngineResult result) {
-    if (result.bytesConsumed() == entry.inNetBuffer.limit()) {
-      entry.inNetBuffer.clear();
-    }
-    else if (result.bytesConsumed()>0) {
-      entry.inNetBuffer.compact();
+    if (result.getStatus() == SSLEngineResult.Status.OK) {
+      if (result.bytesConsumed() == entry.inNetBuffer.limit()) {
+        entry.inNetBuffer.clear();
+      } else if (result.bytesConsumed() > 0) {
+        entry.inNetBuffer.compact();
+      }
     }
   }
 

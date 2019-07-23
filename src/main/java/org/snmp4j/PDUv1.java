@@ -1,37 +1,46 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - PDUv1.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 package org.snmp4j;
 
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BER.MutableByte;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.mp.SnmpConstants;
+import java.io.*;
+import java.util.*;
+import org.snmp4j.asn1.*;
+import org.snmp4j.asn1.BER.*;
 import org.snmp4j.smi.*;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Vector;
-
+import org.snmp4j.smi.OID;
 // for JavaDoc
+import org.snmp4j.mp.SnmpConstants;
 
 /**
- * The <code>PDUv1</class> represents SNMPv1 PDUs. The behavior of this class
+ * The {@code PDUv1} represents SNMPv1 PDUs. The behavior of this class
  * is identical to its superclass {@link PDU} for the PDU type {@link PDU#GET},
  * {@link PDU#GETNEXT}, and {@link PDU#SET}. The other SNMPv2 PDU types
- * implemented by <code>PDU</code> are not supported. In contrast to its super
- * class, <code>PDUv1</code> implements the {@link PDU#V1TRAP} type.
+ * implemented by {@code PDU} are not supported. In contrast to its super
+ * class, {@code PDUv1} implements the {@link PDU#V1TRAP} type.
  *
- * <p>To support this type, access methods are provided to get and set the
- * enterprise <code>OID</code>, generic, specific, and timestamp of a SNMPv1
+ * To support this type, access methods are provided to get and set the
+ * enterprise {@code OID}, generic, specific, and timestamp of a SNMPv1
  * trap PDU.
  *
- * <p>The constants defined for generic SNMPv1 traps are included in this class.
+ * The constants defined for generic SNMPv1 traps are included in this class.
  * The descriptions are taken from the SNMPv2-MIB (RFC 3418). The corresponding
  * OIDs are defined in {@link SnmpConstants}.
  *
@@ -89,7 +98,7 @@ public class PDUv1 extends PDU {
   public static final int AUTHENTICATIONFAILURE = 4;
 
   /**
-   * If the generic trap identifier is <code>ENTERPRISE_SPECIFIC</code>(6), then
+   * If the generic trap identifier is {@code ENTERPRISE_SPECIFIC}(6), then
    * the enterprise specific trap ID is given by the specificTrap member field.
    */
   public static final int ENTERPRISE_SPECIFIC = 6;
@@ -111,7 +120,7 @@ public class PDUv1 extends PDU {
   /**
    * Copy constructor.
    * @param other
-   *    the <code>PDUv1</code> to copy from.
+   *    the {@code PDUv1} to copy from.
    * @since 1.9.1c
    */
   public PDUv1(PDUv1 other) {
@@ -128,11 +137,12 @@ public class PDUv1 extends PDU {
   }
 
   /**
-   * Decodes a <code>Variable</code> from an <code>InputStream</code>.
+   * Decodes a {@code Variable} from an {@link BERInputStream}.
    *
-   * @param inputStream an <code>InputStream</code> containing a BER encoded
+   * @param inputStream an {@code InputStream} containing a BER encoded
    *   byte stream.
    * @throws IOException
+   *   if there is an encoding error in the BER stream.
    */
   public void decodeBER(BERInputStream inputStream) throws IOException {
     MutableByte pduType = new MutableByte();
@@ -170,7 +180,7 @@ public class PDUv1 extends PDU {
       errorIndex.decodeBER(inputStream);
     }
     // reusing pduType here to save memory ;-)
-    pduType = new MutableByte();
+    pduType = new BER.MutableByte();
     int vbLength = BER.decodeHeader(inputStream, pduType);
     if (pduType.getValue() != BER.SEQUENCE) {
       throw new IOException("Encountered invalid tag, SEQUENCE expected: "+
@@ -197,9 +207,9 @@ public class PDUv1 extends PDU {
   }
 
   /**
-   * Encodes a <code>Variable</code> to an <code>OutputStream</code>.
+   * Encodes a {@code Variable} to an {@code OutputStream}.
    *
-   * @param outputStream an <code>OutputStream</code>.
+   * @param outputStream an {@code OutputStream}.
    * @throws IOException if an error occurs while writing to the stream.
    */
   public void encodeBER(OutputStream outputStream) throws IOException {
@@ -218,27 +228,26 @@ public class PDUv1 extends PDU {
       errorIndex.encodeBER(outputStream);
     }
     int vbLength = 0;
-    for (int i=0; i<variableBindings.size(); i++) {
-      vbLength += (variableBindings.get(i)).getBERLength();
-    }
-    BER.encodeHeader(outputStream, BER.SEQUENCE, vbLength);
-    for (int i=0; i<variableBindings.size(); i++) {
-      VariableBinding vb = variableBindings.get(i);
-      if (!isVariableV1(vb.getVariable())) {
-        throw new IOException("Cannot encode Counter64 into a SNMPv1 PDU");
+      for (VariableBinding variableBinding : variableBindings) {
+          vbLength += variableBinding.getBERLength();
       }
-      vb.encodeBER(outputStream);
-    }
+    BER.encodeHeader(outputStream, BER.SEQUENCE, vbLength);
+      for (VariableBinding vb : variableBindings) {
+          if (!isVariableV1(vb.getVariable())) {
+              throw new IOException("Cannot encode Counter64 into a SNMPv1 PDU");
+          }
+          vb.encodeBER(outputStream);
+      }
   }
 
   /**
    * Check if the given variable can be encoded into a SNMPv1 PDU.
    * @param v
-   *    a variable value (must not be <code>null</code>).
+   *    a variable value (must not be {@code null}).
    * @return
-   *    <code>true</code> if the variable is SNMPv1 compatible (or
-   *    {@link SNMP4JSettings#isAllowSNMPv2InV1()} is true),
-   *    <code>false</code> otherwise, i.e. if <code>v</code> is an instance of
+   *    {@code true} if the variable is SNMPv1 compatible (or
+   *    {@link org.snmp4j.SNMP4JSettings#isAllowSNMPv2InV1()} is true),
+   *    {@code false} otherwise, i.e. if {@code v} is an instance of
    *    {@link Counter64}.
    * @since 1.9.1c
    */
@@ -253,9 +262,9 @@ public class PDUv1 extends PDU {
     else {
       int length = 0;
       // length for all vbs
-      for (int i = 0; i < variableBindings.size(); i++) {
-        length += (variableBindings.get(i)).getBERLength();
-      }
+        for (VariableBinding variableBinding : variableBindings) {
+            length += variableBinding.getBERLength();
+        }
       length += BER.getBERLengthOfLength(length) + 1;
       length += agentAddress.getBERLength();
       length += enterprise.getBERLength();
@@ -268,10 +277,11 @@ public class PDUv1 extends PDU {
 
   /**
    * This method is not supported for SNMPv1 PDUs and will throw a
-   * {@link UnsupportedOperationException}
+   * {@link java.lang.UnsupportedOperationException}
    * @return
    *    nothing
    * @throws UnsupportedOperationException
+   *   is always thrown.
    */
   public int getMaxRepetitions() {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
@@ -279,9 +289,10 @@ public class PDUv1 extends PDU {
 
   /**
    * This method is not supported for SNMPv1 PDUs and will throw a
-   * {@link UnsupportedOperationException}
-   * @param maxRepetitions int
+   * {@link java.lang.UnsupportedOperationException}
+   * @param maxRepetitions the number of repetitions for SNMPv2c or later SNMP version. Ignored by this PDUv1.
    * @throws UnsupportedOperationException
+   *   is always thrown.
    */
   public void setMaxRepetitions(int maxRepetitions) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
@@ -289,10 +300,11 @@ public class PDUv1 extends PDU {
 
   /**
    * This method is not supported for SNMPv1 PDUs and will throw a
-   * {@link UnsupportedOperationException}
+   * {@link java.lang.UnsupportedOperationException}
    *
    * @param maxSizeScopedPDU int
    * @throws UnsupportedOperationException
+   *   is always thrown.
    */
   public void setMaxSizeScopedPDU(int maxSizeScopedPDU) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
@@ -300,10 +312,11 @@ public class PDUv1 extends PDU {
 
   /**
    * This method is not supported for SNMPv1 PDUs and will throw a
-   * {@link UnsupportedOperationException}
+   * {@link java.lang.UnsupportedOperationException}
    *
    * @param nonRepeaters int
    * @throws UnsupportedOperationException
+   *   is always thrown.
    */
   public void setNonRepeaters(int nonRepeaters) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
@@ -345,7 +358,7 @@ public class PDUv1 extends PDU {
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
-  public void setEnterprise(OID enterprise) {
+  public void setEnterprise(org.snmp4j.smi.OID enterprise) {
     checkV1TRAP();
     checkNull(enterprise);
     this.enterprise = (OID) enterprise.clone();
@@ -362,7 +375,7 @@ public class PDUv1 extends PDU {
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
-  public IpAddress getAgentAddress() {
+  public org.snmp4j.smi.IpAddress getAgentAddress() {
     checkV1TRAP();
     return agentAddress;
   }
@@ -372,11 +385,11 @@ public class PDUv1 extends PDU {
    * The default value is 0.0.0.0, which should be only overriden in special
    * cases, for example when forwarding SNMPv1 traps through a SNMP proxy.
    * @param agentAddress
-   *    a <code>IpAddress</code> instance.
+   *    a {@code IpAddress} instance.
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
-  public void setAgentAddress(IpAddress agentAddress) {
+  public void setAgentAddress(org.snmp4j.smi.IpAddress agentAddress) {
     checkV1TRAP();
     checkNull(agentAddress);
     this.agentAddress = agentAddress;
@@ -401,7 +414,7 @@ public class PDUv1 extends PDU {
    * {@link #setSpecificTrap} must be used to set the trap ID of the enterprise
    * specific trap.
    * @param genericTrap
-   *    an integer value >= 0 and <= 6.
+   *    an integer value &gt;= 0 and &lt;= 6.
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
@@ -414,7 +427,7 @@ public class PDUv1 extends PDU {
    * Gets the specific trap ID. If this value is set,
    * {@link #getGenericTrap()} must return ENTERPRISE_SPECIFIC(6).
    * @return
-   *    an integer value > 0.
+   *    an integer value &gt; 0.
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
@@ -428,7 +441,7 @@ public class PDUv1 extends PDU {
    * {@link #ENTERPRISE_SPECIFIC}.
    *
    * @param specificTrap
-   *    an integer value > 0.
+   *    an integer value &gt; 0.
    * @throws UnsupportedOperationException if the type of this PDU is not
    *    {@link PDU#V1TRAP}.
    */
@@ -438,7 +451,7 @@ public class PDUv1 extends PDU {
   }
 
   /**
-   * Gets the <code>TimeTicks</code> value of the trap sender's notion of
+   * Gets the {@code TimeTicks} value of the trap sender's notion of
    * its sysUpTime value when this trap has been generated.
    *
    * @return
@@ -452,7 +465,7 @@ public class PDUv1 extends PDU {
   }
 
   /**
-   * Sets the <code>TimeTicks</code> value of the trap sender's notion of
+   * Sets the {@code TimeTicks} value of the trap sender's notion of
    * its sysUpTime value when this trap has been generated.
    *
    * @param timeStamp
@@ -467,7 +480,7 @@ public class PDUv1 extends PDU {
    * Checks for null parameters.
    * @param parameter
    *    an Object instance.
-   * @throws NullPointerException if <code>parameter</code> is null.
+   * @throws NullPointerException if {@code parameter} is null.
    */
   protected void checkNull(Variable parameter) {
     if (parameter == null) {
@@ -477,7 +490,7 @@ public class PDUv1 extends PDU {
 
   public String toString() {
     if (type == PDU.V1TRAP) {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       buf.append(getTypeString(type));
       buf.append("[reqestID=");
       buf.append(requestID);

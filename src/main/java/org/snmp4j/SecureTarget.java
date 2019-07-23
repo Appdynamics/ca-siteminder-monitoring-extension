@@ -1,22 +1,36 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - SecureTarget.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.smi.Address;
 import org.snmp4j.smi.OctetString;
-
-import java.io.Serializable;
+import java.io.*;
+import org.snmp4j.security.SecurityLevel;
+import org.snmp4j.security.SecurityModel;
+import org.snmp4j.smi.Address;
 
 /**
- * The <code>SecureTarget</code> is an security model independent abstract class
+ * The {@code SecureTarget} is an security model independent abstract class
  * for all targets supporting secure SNMP communication.
  *
- * @author Jochen Katz & Frank Fock
+ * @author Jochen Katz
+ * @author Frank Fock
  * @version 2.0
  */
 public abstract class SecureTarget
@@ -33,10 +47,10 @@ public abstract class SecureTarget
   /**
    * Creates a SNMPv3 secure target with an address and security name.
    * @param address
-   *    an <code>Address</code> instance denoting the transport address of the
+   *    an {@code Address} instance denoting the transport address of the
    *    target.
    * @param securityName
-   *    a <code>OctetString</code> instance representing the security name
+   *    a {@code OctetString} instance representing the security name
    *    of the USM user used to access the target.
    */
   protected SecureTarget(Address address, OctetString securityName) {

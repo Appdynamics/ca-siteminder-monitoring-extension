@@ -1,25 +1,36 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - SecurityProtocols.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.security;
 
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
+import java.io.Serializable;
+
 import org.snmp4j.security.nonstandard.NonStandardSecurityProtocol;
 import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
-import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Properties;
+import java.util.Enumeration;
+import org.snmp4j.log.*;
+import java.io.IOException;
+import java.util.Hashtable;
+import org.snmp4j.smi.OctetString;
+import org.snmp4j.SNMP4JSettings;
 
 /**
  * The <code>SecurityProtocols</code> class holds all authentication and
@@ -30,8 +41,9 @@ import java.util.Properties;
  * of the <code>SecurityProtocols.properties</code> file. The path has to
  * be specified relatively to this class.
  *
- * @author Jochen Katz & Frank Fock
- * @version 1.9
+ * @author Frank Fock
+ * @author Jochen Katz
+ * @version 2.6.0
  */
 public class SecurityProtocols implements Serializable {
 
@@ -76,6 +88,23 @@ public class SecurityProtocols implements Serializable {
   }
 
   /**
+   * Get the security protocol ({@link AuthenticationProtocol} or {@link PrivacyProtocol}) for the specified protocol
+   * OID.
+   * @param protocolID
+   *   an object identifier of the security protocol to return.
+   * @return
+   *   the security protocol or {@code null} if a protocol with such an ID has not been added yet.
+   * @since 2.6.0
+   */
+  public SecurityProtocol getSecurityProtocol(OID protocolID) {
+    SecurityProtocol protocol = getAuthenticationProtocol(protocolID);
+    if (protocol == null) {
+      protocol = getPrivacyProtocol(protocolID);
+    }
+    return protocol;
+  }
+
+  /**
    * Add the default SecurityProtocols.
    *
    * The names of the SecurityProtocols to add are read from a
@@ -111,7 +140,7 @@ public class SecurityProtocols implements Serializable {
           try {
             Class c = Class.forName(className);
             Object proto = c.newInstance();
-            if ((proto instanceof NonStandardSecurityProtocol) && (customOID != null)) {
+            if ((proto instanceof NonStandardSecurityProtocol) && (customOID != null) && (customOID.size() > 0)) {
               if (logger.isInfoEnabled()) {
                 logger.info("Assigning custom ID '" + customOID + "' to security protocol " + className);
               }
@@ -154,7 +183,9 @@ public class SecurityProtocols implements Serializable {
     else {
       addAuthenticationProtocol(new AuthMD5());
       addAuthenticationProtocol(new AuthSHA());
+      addAuthenticationProtocol(new AuthHMAC128SHA224());
       addAuthenticationProtocol(new AuthHMAC192SHA256());
+      addAuthenticationProtocol(new AuthHMAC256SHA384());
       addAuthenticationProtocol(new AuthHMAC384SHA512());
       addPrivacyProtocol(new PrivDES());
       addPrivacyProtocol(new PrivAES128());

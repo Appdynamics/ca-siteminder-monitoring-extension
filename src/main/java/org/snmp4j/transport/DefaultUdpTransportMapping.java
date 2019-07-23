@@ -1,28 +1,38 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - DefaultUdpTransportMapping.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.transport;
 
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.TransportStateReference;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.util.WorkerTask;
-
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 
+import org.snmp4j.TransportStateReference;
+import org.snmp4j.log.*;
+import org.snmp4j.security.SecurityLevel;
+import org.snmp4j.smi.*;
+import org.snmp4j.SNMP4JSettings;
+import java.io.InterruptedIOException;
+import org.snmp4j.util.WorkerTask;
+
 /**
- * The <code>DefaultUdpTransportMapping</code> implements a UDP transport
+ * The {@code DefaultUdpTransportMapping} implements a UDP transport
  * mapping based on Java standard IO and using an internal thread for
  * listening on the inbound socket.
  *
@@ -60,7 +70,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
    * @param udpAddress
    *    the local address for sending and receiving of UDP messages.
    * @param reuseAddress
-   *    if <code>true</code> addresses are reused which provides faster socket
+   *    if {@code true} addresses are reused which provides faster socket
    *    binding if an application is restarted for instance.
    * @throws IOException
    *    if socket binding fails.
@@ -93,7 +103,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
 
   public void sendMessage(UdpAddress targetAddress, byte[] message,
                           TransportStateReference tmStateReference)
-      throws IOException
+      throws java.io.IOException
   {
     InetSocketAddress targetSocketAddress =
         new InetSocketAddress(targetAddress.getInetAddress(),
@@ -111,6 +121,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
    * Closes the socket and stops the listener thread.
    *
    * @throws IOException
+   *    if the socket cannot be closed.
    */
   public void close() throws IOException {
     boolean interrupted = false;
@@ -155,6 +166,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
    * listen thread gracefully and free associated ressources.
    *
    * @throws IOException
+   *    if the listen port could not be bound to the server thread.
    */
   public synchronized void listen() throws IOException {
     if (listener != null) {
@@ -230,7 +242,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
   /**
    * Returns the name of the listen thread.
    * @return
-   *    the thread name if in listening mode, otherwise <code>null</code>.
+   *    the thread name if in listening mode, otherwise {@code null}.
    * @since 1.6
    */
   public String getThreadName() {
@@ -262,7 +274,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
    * This size might not reflect the actual size of the receive buffer, which
    * is implementation specific.
    * @return
-   *    <=0 if the default buffer size of the OS is used, or a value >0 if the
+   *    &lt;=0 if the default buffer size of the OS is used, or a value &gt;0 if the
    *    user specified a buffer size.
    */
   public int getReceiveBufferSize() {
@@ -270,11 +282,11 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
   }
 
   /**
-   * Sets the receive buffer size, which should be > the maximum inbound message
+   * Sets the receive buffer size, which should be greater than the maximum inbound message
    * size. This method has to be called before {@link #listen()} to be
    * effective.
    * @param receiveBufferSize
-   *    an integer value >0 and > {@link #getMaxInboundMessageSize()}.
+   *    an integer value &gt;0 and &gt; {@link #getMaxInboundMessageSize()}.
    */
   public void setReceiveBufferSize(int receiveBufferSize) {
     if (receiveBufferSize <= 0) {
@@ -310,7 +322,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
     UdpAddress actualListenAddress = null;
     DatagramSocket socketCopy = socket;
     if (socketCopy != null) {
-      actualListenAddress = new UdpAddress(socketCopy.getInetAddress(), socketCopy.getLocalPort());
+      actualListenAddress = new UdpAddress(socketCopy.getLocalAddress(), socketCopy.getLocalPort());
     }
     return actualListenAddress;
   }
@@ -323,9 +335,9 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
    * @param failedSocket
    *    the socket that caused the exception. By default, he socket will be closed
    *    in order to be able to reopen it. Implementations may also try to reuse the socket, in dependence
-   *    of the <code>socketException</code>.
+   *    of the {@code socketException}.
    * @return
-   *    the new socket or <code>null</code> if the listen thread should be terminated with the provided
+   *    the new socket or {@code null} if the listen thread should be terminated with the provided
    *    exception.
    * @throws SocketException
    *    a new socket exception if the socket could not be renewed.
@@ -381,7 +393,12 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
               stop = true;
               continue;
             }
-            socketCopy.receive(packet);
+            try {
+                socketCopy.receive(packet);
+            }
+            catch (SocketTimeoutException ste) {
+                continue;
+            }
           }
           catch (InterruptedIOException iiox) {
             if (iiox.bytesTransferred <= 0) {
@@ -424,7 +441,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
           if (logger.isDebugEnabled()) {
             purex.printStackTrace();
           }
-          if (SNMP4JSettings.isForwardRuntimeExceptions()) {
+          if (!stop && SNMP4JSettings.isForwardRuntimeExceptions()) {
             throw new RuntimeException(purex);
           }
           break;
@@ -433,7 +450,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
           if (!stop) {
             logger.warn("Socket for transport mapping " + toString() + " error: " + soex.getMessage());
           }
-          if (SNMP4JSettings.isForwardRuntimeExceptions()) {
+          if (!stop && SNMP4JSettings.isForwardRuntimeExceptions()) {
             stop = true;
             throw new RuntimeException(soex);
           }
@@ -458,7 +475,7 @@ public class DefaultUdpTransportMapping extends UdpTransportMapping {
           if (logger.isDebugEnabled()) {
             iox.printStackTrace();
           }
-          if (SNMP4JSettings.isForwardRuntimeExceptions()) {
+          if (!stop && SNMP4JSettings.isForwardRuntimeExceptions()) {
             throw new RuntimeException(iox);
           }
         }

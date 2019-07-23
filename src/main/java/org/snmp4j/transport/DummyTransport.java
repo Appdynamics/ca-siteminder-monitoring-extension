@@ -1,10 +1,22 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - DummyTransport.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 package org.snmp4j.transport;
 
@@ -20,8 +32,13 @@ import org.snmp4j.util.WorkerTask;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The <code>DummyTransport</code> is a test TransportMapping for Command Generators
@@ -84,12 +101,14 @@ public class DummyTransport<A extends IpAddress> extends AbstractTransportMappin
 
   @Override
   public void close() throws IOException {
-    listening = false;
-    listenThread.terminate();
-    try {
-      listenThread.join();
-    } catch (InterruptedException e) {
-     // ignore
+    if (listening) {
+      listening = false;
+      listenThread.terminate();
+      try {
+        listenThread.join();
+      } catch (InterruptedException e) {
+        // ignore
+      }
     }
     responses.clear();
   }
@@ -193,11 +212,13 @@ public class DummyTransport<A extends IpAddress> extends AbstractTransportMappin
     @Override
     public void close() throws IOException {
       this.listening = false;
-      this.listenThread.terminate();
-      try {
-        this.listenThread.join();
-      } catch (InterruptedException e) {
-       // ignore
+      if (listenThread != null) {
+        this.listenThread.terminate();
+        try {
+          this.listenThread.join();
+        } catch (InterruptedException e) {
+          // ignore
+        }
       }
       requests.clear();
     }

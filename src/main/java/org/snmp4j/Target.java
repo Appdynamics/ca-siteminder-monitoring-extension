@@ -1,23 +1,34 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - Target.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
-
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OctetString;
 
 import java.io.Serializable;
 import java.util.List;
 
+import org.snmp4j.smi.Address;
 // for JavaDoc
+import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.smi.OctetString;
 
 /**
- * A <code>Target</code> interface defines an abstract representation of a
+ * A {@code Target} interface defines an abstract representation of a
  * remote SNMP entity. It represents a target with an Address object, as well
  * protocol parameters such as retransmission and timeout policy.
  *
@@ -41,13 +52,13 @@ public interface Target extends Serializable, Cloneable {
   void setAddress(Address address);
 
   /**
-   * Sets the SNMP version (thus the SNMP messagen processing model) of the
+   * Sets the SNMP version (thus the SNMP message processing model) of the
    * target.
    * @param version
    *    the message processing model ID.
-   * @see SnmpConstants#version1
-   * @see SnmpConstants#version2c
-   * @see SnmpConstants#version3
+   * @see org.snmp4j.mp.SnmpConstants#version1
+   * @see org.snmp4j.mp.SnmpConstants#version2c
+   * @see org.snmp4j.mp.SnmpConstants#version3
    */
   void setVersion(int version);
 
@@ -55,9 +66,9 @@ public interface Target extends Serializable, Cloneable {
    * Gets the SNMP version (NMP messagen processing model) of the target.
    * @return
    *    the message processing model ID.
-   * @see SnmpConstants#version1
-   * @see SnmpConstants#version2c
-   * @see SnmpConstants#version3
+   * @see org.snmp4j.mp.SnmpConstants#version1
+   * @see org.snmp4j.mp.SnmpConstants#version2c
+   * @see org.snmp4j.mp.SnmpConstants#version3
    */
   int getVersion();
 
@@ -72,7 +83,7 @@ public interface Target extends Serializable, Cloneable {
   /**
    * Gets the number of retries.
    * @return
-   *    an integer >= 0.
+   *    an integer &gt;= 0.
    */
   int getRetries();
 
@@ -124,7 +135,7 @@ public interface Target extends Serializable, Cloneable {
   /**
    * Gets the security model associated with this target.
    * @return
-   *    an <code>int</code> value as defined in the {@link org.snmp4j.security.SecurityModel}
+   *    an {@code int} value as defined in the {@link org.snmp4j.security.SecurityModel}
    *    interface or any third party subclass thereof.
    */
   int getSecurityModel();
@@ -135,7 +146,7 @@ public interface Target extends Serializable, Cloneable {
    * authentication and privacy protocol settings from the security model
    * dependent internal storage.
    * @return
-   *   an <code>OctetString</code> instance (never <code>null</code>).
+   *   an {@code OctetString} instance (never {@code null}).
    */
   OctetString getSecurityName();
 
@@ -143,11 +154,11 @@ public interface Target extends Serializable, Cloneable {
    * Gets the security level associated with this target.
    * @return
    *   one of
-   *   <P><UL>
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#NOAUTH_NOPRIV}
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_NOPRIV}
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_PRIV}
-   *   </UL></P>
+   *   <UL>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#NOAUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_PRIV}</LI>
+   *   </UL>
    */
   int getSecurityLevel();
 
@@ -157,18 +168,18 @@ public interface Target extends Serializable, Cloneable {
    * the security name set for this target.
    * @param securityLevel
    *   one of
-   *   <P><UL>
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#NOAUTH_NOPRIV}
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_NOPRIV}
-   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_PRIV}
-   *   </UL></P>
+   *   <UL>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#NOAUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_PRIV}</LI>
+   *   </UL>
    */
   void setSecurityLevel(int securityLevel);
 
   /**
    * Sets the security model for this target.
    * @param securityModel
-   *    an <code>int</code> value as defined in the {@link org.snmp4j.security.SecurityModel}
+   *    an {@code int} value as defined in the {@link org.snmp4j.security.SecurityModel}
    *    interface or any third party subclass thereof.
    */
   void setSecurityModel(int securityModel);
@@ -176,7 +187,7 @@ public interface Target extends Serializable, Cloneable {
   /**
    * Sets the security name to be used with this target.
    * @param securityName
-   *    an <code>OctetString</code> instance (must not be <code>null</code>).
+   *    an {@code OctetString} instance (must not be {@code null}).
    * @see #getSecurityName()
    */
   void setSecurityName(OctetString securityName);

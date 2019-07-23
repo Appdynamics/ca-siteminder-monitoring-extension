@@ -1,25 +1,37 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - CommandResponderEvent.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.mp.PduHandle;
+import java.util.EventObject;
 import org.snmp4j.mp.StateReference;
 import org.snmp4j.smi.Address;
+import org.snmp4j.mp.PduHandle;
 import org.snmp4j.smi.OctetString;
-
-import java.util.EventObject;
 
 /**
  * The <code>CommandResponderEvent</code> is fired by the
  * <code>MessageDispatcher</code> to listeners that potentially can process
  * the included request, report, or trap/notification.
  *
- * @author Jochen Katz & Frank Fock
+ * @author Frank Fock
+ * @author Jochen Katz
  * @version 2.0
  */
 public class CommandResponderEvent extends EventObject {
@@ -145,16 +157,16 @@ public class CommandResponderEvent extends EventObject {
   public int getMaxSizeResponsePDU() {
     return maxSizeResponsePDU;
   }
-  public void setPduHandle(PduHandle pduHandle) {
+  public void setPduHandle(org.snmp4j.mp.PduHandle pduHandle) {
     this.pduHandle = pduHandle;
   }
   public PduHandle getPduHandle() {
     return pduHandle;
   }
-  public void setStateReference(StateReference stateReference) {
+  public void setStateReference(org.snmp4j.mp.StateReference stateReference) {
     this.stateReference = stateReference;
   }
-  public StateReference getStateReference() {
+  public org.snmp4j.mp.StateReference getStateReference() {
     return stateReference;
   }
   public void setPDU(PDU pdu) {

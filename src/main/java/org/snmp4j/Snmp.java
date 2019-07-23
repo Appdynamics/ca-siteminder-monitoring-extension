@@ -1,45 +1,50 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - Snmp.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.event.CounterEvent;
-import org.snmp4j.event.ResponseEvent;
-import org.snmp4j.event.ResponseListener;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
-import org.snmp4j.mp.*;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.security.SecurityModel;
-import org.snmp4j.security.SecurityProtocols;
-import org.snmp4j.security.USM;
-import org.snmp4j.smi.*;
-import org.snmp4j.transport.ConnectionOrientedTransportMapping;
-import org.snmp4j.transport.TransportMappings;
-import org.snmp4j.util.CommonTimer;
-
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
+import org.snmp4j.event.*;
+import org.snmp4j.log.*;
+import org.snmp4j.mp.*;
+import org.snmp4j.security.*;
+import org.snmp4j.smi.*;
+import org.snmp4j.transport.*;
+import org.snmp4j.util.*;
+
 /**
- * The <code>Snmp</code> class is the core of SNMP4J. It provides functions to
+ * The {@code Snmp} class is the core of SNMP4J. It provides functions to
  * send and receive SNMP PDUs. All SNMP PDU types can be send. Confirmed
  * PDUs can be sent synchronously and asynchronously.
  * <p>
- * The <code>Snmp</code> class is transport protocol independent. Support for
+ * The {@code Snmp} class is transport protocol independent. Support for
  * a specific {@link TransportMapping} instance is added by calling the
  * {@link #addTransportMapping(TransportMapping transportMapping)} method or
- * creating a <code>Snmp</code> instance by using the non-default constructor
+ * creating a {@code Snmp} instance by using the non-default constructor
  * with the corresponding transport mapping. Transport mappings are used
- * for incoming and outgoing messages.
+ * for incoming and outgoing messages.</p>
  * <p>
  * To setup a default SNMP session for UDP transport and with SNMPv3 support
- * the following code snippet can be used:
- * <p>
+ * the following code snippet can be used:</p>
+ *
  * <pre>
  *   Address targetAddress = GenericAddress.parse("udp:127.0.0.1/161");
  *   TransportMapping transport = new DefaultUdpTransportMapping();
@@ -49,10 +54,10 @@ import java.util.*;
  *   SecurityModels.getInstance().addSecurityModel(usm);
  *   transport.listen();
  * </pre>
- * <p>
+ *
  * How a synchronous SNMPv3 message with authentication and privacy is then
  * sent illustrates the following code snippet:
- * <p>
+ *
  * <pre>
  *   // add user to the USM
  *   snmp.getUSM().addUser(new OctetString("MD5DES"),
@@ -82,8 +87,11 @@ import java.util.*;
  *   // extract the address used by the agent to send the response:
  *   Address peerAddress = response.getPeerAddress();
  * </pre>
+ *
  * <p>
  * An asynchronous SNMPv1 request is sent by the following code:
+ * </p>
+ *
  * <pre>
  *   // setting up target
  *   CommunityTarget target = new CommunityTarget();
@@ -110,9 +118,10 @@ import java.util.*;
  *   };
  *   snmp.sendPDU(pdu, target, null, listener);
  * </pre>
- * </p>
+ *
  * Traps (notifications) and other SNMP PDUs can be received by adding the
- * folling code to the first code snippet above:
+ * following code to the first code snippet above:
+ *
  * <pre>
  *   CommandResponder trapPrinter = new CommandResponder() {
  *     public synchronized void processPdu(CommandResponderEvent e) {
@@ -124,7 +133,7 @@ import java.util.*;
  *   };
  *   snmp.addCommandResponder(trapPrinter);
  * </pre>
- * </p>
+ *
  *
  * @author Frank Fock
  * @version 1.10
@@ -140,13 +149,13 @@ public class Snmp implements Session, CommandResponder {
   private MessageDispatcher messageDispatcher;
 
   /**
-   * The <code>pendingRequests</code> table contains pending requests
-   * accessed trough the key <code>PduHandle</code>
+   * The {@code pendingRequests} table contains pending requests
+   * accessed trough the key {@code PduHandle}
    */
   private final Map<PduHandle, PendingRequest> pendingRequests = new Hashtable<PduHandle, PendingRequest>(50);
 
   /**
-   * The <code>asyncRequests</code> table contains pending requests
+   * The {@code asyncRequests} table contains pending requests
    * accessed trough the key userObject
    */
   private final Map<Object, PduHandle> asyncRequests = new Hashtable<Object, PduHandle>(50);
@@ -172,8 +181,8 @@ public class Snmp implements Session, CommandResponder {
   private CounterSupport counterSupport;
 
   /**
-   * Creates a <code>Snmp</code> instance that uses a
-   * <code>MessageDispatcherImpl</code> with no message processing
+   * Creates a {@code Snmp} instance that uses a
+   * {@code MessageDispatcherImpl} with no message processing
    * models and no security protols (by default). You will have to add
    * those by calling the appropriate methods on
    * {@link #getMessageDispatcher()}.
@@ -181,7 +190,7 @@ public class Snmp implements Session, CommandResponder {
    * At least one transport mapping has to be added before {@link #listen()}
    * is called in order to be able to send and receive SNMP messages.
    * <p>
-   * To initialize a <code>Snmp</code> instance created with this constructor
+   * To initialize a {@code Snmp} instance created with this constructor
    * follow this sample code:
    * <pre>
    * Transport transport = ...;
@@ -359,6 +368,32 @@ public class Snmp implements Session, CommandResponder {
    */
   public MessageDispatcher getMessageDispatcher() {
     return messageDispatcher;
+  }
+
+  /**
+   * Sets the message dispatcher associated with this SNMP session. The {@link CommandResponder} registration is
+   * removed from the existing message dispatcher (if not {@code null}).
+   * @param messageDispatcher
+   *    a message dispatcher that processes incoming SNMP {@link PDU}s.
+   * @since 2.5.7
+   */
+  public void setMessageDispatcher(MessageDispatcher messageDispatcher) {
+    if (messageDispatcher == null) {
+      throw new NullPointerException();
+    }
+    Collection<TransportMapping> existingTransportMappings = new LinkedList<TransportMapping>();
+    if (this.messageDispatcher != null) {
+      existingTransportMappings = messageDispatcher.getTransportMappings();
+      for (TransportMapping tm : existingTransportMappings) {
+        removeTransportMapping(tm);
+      }
+      this.messageDispatcher.removeCommandResponder(this);
+    }
+    this.messageDispatcher = messageDispatcher;
+    this.messageDispatcher.addCommandResponder(this);
+    for (TransportMapping tm : existingTransportMappings) {
+      addTransportMapping(tm);
+    }
   }
 
   /**
@@ -549,9 +584,7 @@ public class Snmp implements Session, CommandResponder {
    */
   public void close() throws IOException {
     for (TransportMapping tm : messageDispatcher.getTransportMappings()) {
-      if (tm.isListening()) {
-        tm.close();
-      }
+      tm.close();
     }
     CommonTimer t = timer;
     timer = null;
@@ -1109,7 +1142,9 @@ public class Snmp implements Session, CommandResponder {
     mpv3.setLocalEngineID(engineID);
     mpv3.setCurrentMsgID(MPv3.randomMsgID(engineBoots));
     USM usm = (USM) mpv3.getSecurityModel(SecurityModel.SECURITY_MODEL_USM);
-    usm.setLocalEngine(new OctetString(engineID), engineBoots, engineTime);
+    if (usm != null) {
+      usm.setLocalEngine(new OctetString(engineID), engineBoots, engineTime);
+    }
   }
 
   /**
@@ -1136,7 +1171,7 @@ public class Snmp implements Session, CommandResponder {
    * because SNMP4J automatically discovers authoritative engine IDs and
    * also automatically synchronize engine time values.
    * <p>
-   * <em>For this method to operate succesfully, the discover engine IDs
+   * <em>For this method to operate successfully, the discover engine IDs
    * flag in {@link USM} must be <code>true</code> (which is the default).
    * </em>
    * @param address
@@ -1404,7 +1439,7 @@ public class Snmp implements Session, CommandResponder {
         pendingRequests.remove(handle);
         if (intime && (reqListener != null)) {
           // return report
-          reqListener.onResponse(new ResponseEvent(this,
+          reqListener.onResponse(new ResponseEvent(Snmp.this,
               e.getPeerAddress(),
               reqPDU,
               pdu,
@@ -1540,7 +1575,7 @@ public class Snmp implements Session, CommandResponder {
    * snmp4jStatsRequestWaitTime
    * @return
    *   the counter support if available. If the {@link SNMP4JSettings#getSnmp4jStatistics()} value is
-   *   {@link SNMP4JSettings.Snmp4jStatistics#none} then no counter support will be created
+   *   {@link org.snmp4j.SNMP4JSettings.Snmp4jStatistics#none} then no counter support will be created
    *   and no statistics will be collected.
    * @since 2.4.2
    */

@@ -1,16 +1,27 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - BERInputStream.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.asn1;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.BufferUnderflowException;
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.BufferUnderflowException;
 
 
 /**
@@ -39,7 +50,7 @@ public class BERInputStream extends InputStream {
     this.buffer = buf;
   }
 
-  public int read() throws IOException {
+  public int read() throws java.io.IOException {
     try {
       return (buffer.get() & 0xFF);
     }
@@ -123,7 +134,7 @@ public class BERInputStream extends InputStream {
    * @throws IOException if an I/O error occurs.
    */
   public int read(byte[] b, int off, int len) throws IOException {
-    if (buffer.remaining() <= 0) {
+    if (buffer.remaining() <= 0 && (len > 0)) {
       return -1;
     }
     int read = Math.min(buffer.remaining(), b.length);

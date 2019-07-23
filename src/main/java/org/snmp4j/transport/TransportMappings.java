@@ -1,28 +1,39 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - TransportMappings.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.transport;
 
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.TransportMapping;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
 import org.snmp4j.smi.Address;
+import org.snmp4j.TransportMapping;
+import java.io.InputStream;
+import java.util.Properties;
+import java.io.IOException;
+import java.util.Hashtable;
+import java.util.Enumeration;
+import org.snmp4j.log.*;
+import java.lang.reflect.Constructor;
+import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.smi.TcpAddress;
 import org.snmp4j.smi.TlsAddress;
 import org.snmp4j.smi.UdpAddress;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Properties;
 
 /**
  * The <code>TransportMappings</code> factory can be used to create a transport

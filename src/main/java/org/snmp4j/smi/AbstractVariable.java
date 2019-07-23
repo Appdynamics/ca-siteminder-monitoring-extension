@@ -1,44 +1,48 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - AbstractVariable.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
-import org.snmp4j.PDU;
+import java.io.*;
+import java.util.*;
+import org.snmp4j.log.*;
+import org.snmp4j.asn1.*;
 import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Properties;
-
 // For JavaDoc:
+import org.snmp4j.PDU;
 
 /**
- * The <code>Variable</code> abstract class is the base class for all SNMP
+ * The {@code Variable} abstract class is the base class for all SNMP
  * variables.
  * <p>
  * All derived classes need to be registered with their SMI BER type in the
- * <code>smisyntaxes.properties</code>so that the
+ * {@code smisyntaxes.properties}so that the
  * {@link #createFromBER(BERInputStream inputStream)} method
  * is able to decode a variable from a BER encoded stream.
  * <p>
  * To register additional syntaxes, set the system property
  * {@link #SMISYNTAXES_PROPERTIES} before decoding a Variable for the first
  * time. The path of the property file must be accessible from the classpath
- * and it has to be specified relative to the <code>Variable</code> class.
+ * and it has to be specified relative to the {@code Variable} class.
  *
- * @author Jochen Katz & Frank Fock
+ * @author Frank Fock
+ * @author Jochen Katz
  * @version 1.8
  * @since 1.8
  */
@@ -75,7 +79,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
       LogFactory.getLogger(AbstractVariable.class);
 
   /**
-   * The abstract <code>Variable</code> class serves as the base class for all
+   * The abstract {@code Variable} class serves as the base class for all
    * specific SNMP syntax types.
    */
   public AbstractVariable() {
@@ -88,7 +92,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
   public abstract int hashCode();
 
   /**
-   * Returns the length of this <code>Variable</code> in bytes when encoded
+   * Returns the length of this {@code Variable} in bytes when encoded
    * according to the Basic Encoding Rules (BER).
    * @return
    *    the BER encoded length of this variable.
@@ -100,35 +104,35 @@ public abstract class AbstractVariable implements Variable, Serializable {
   }
 
   /**
-   * Decodes a <code>Variable</code> from an <code>InputStream</code>.
+   * Decodes a {@link Variable} from an {@link BERInputStream}.
    * @param inputStream
-   *    an <code>InputStream</code> containing a BER encoded byte stream.
+   *    an {@code BERInputStream} containing a BER encoded byte stream.
    * @throws IOException
    *    if the stream could not be decoded by using BER rules.
    */
   public abstract void decodeBER(BERInputStream inputStream) throws IOException;
 
   /**
-   * Encodes a <code>Variable</code> to an <code>OutputStream</code>.
+   * Encodes a {@link Variable} to an {@link OutputStream}.
    * @param outputStream
-   *    an <code>OutputStream</code>.
+   *    an {@code OutputStream}.
    * @throws IOException
    *    if an error occurs while writing to the stream.
    */
   public abstract void encodeBER(OutputStream outputStream) throws IOException;
 
   /**
-   * Creates a <code>Variable</code> from a BER encoded <code>InputStream</code>.
-   * Subclasses of <code>Variable</code> are registered using the properties file
-   * <code>smisyntaxes.properties</code> in this package. The properties are
+   * Creates a {@link Variable} from a BER encoded {@link BERInputStream}.
+   * Subclasses of {@code Variable} are registered using the properties file
+   * {@code smisyntaxes.properties} in this package. The properties are
    * read when this method is called first.
    *
    * @param inputStream
-   *    an <code>BERInputStream</code> containing a BER encoded byte stream.
+   *    an {@code BERInputStream} containing a BER encoded byte stream.
    * @return
-   *    an instance of a subclass of <code>Variable</code>.
+   *    an instance of a subclass of {@code Variable}.
    * @throws IOException
-   *    if the <code>inputStream</code> is not properly BER encoded.
+   *    if the {@code inputStream} is not properly BER encoded.
    */
   public static Variable createFromBER(BERInputStream inputStream) throws
       IOException {
@@ -144,7 +148,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
     int type = inputStream.read();
     Variable variable;
     if (SNMP4JSettings.isExtensibilityEnabled()) {
-      Class<? extends Variable> c = registeredSyntaxes.get(new Integer(type));
+      Class<? extends Variable> c = registeredSyntaxes.get(type);
       if (c == null) {
         throw new IOException("Encountered unsupported variable syntax: " +
                               type);
@@ -219,16 +223,16 @@ public abstract class AbstractVariable implements Variable, Serializable {
   }
 
   /**
-   * Creates a <code>Variable</code> from the supplied SMI syntax identifier.
-   * Subclasses of <code>Variable</code> are registered using the properties
-   * file <code>smisyntaxes.properties</code> in this package. The properties
+   * Creates a {@code Variable} from the supplied SMI syntax identifier.
+   * Subclasses of {@code Variable} are registered using the properties
+   * file {@code smisyntaxes.properties} in this package. The properties
    * are read when this method is called for the first time.
    *
    * @param smiSyntax
    *    an SMI syntax identifier of the registered types, which is typically
    *    defined by {@link SMIConstants}.
    * @return
-   *    a <code>Variable</code> variable instance of the supplied SMI syntax.
+   *    a {@code Variable} variable instance of the supplied SMI syntax.
    */
   public static Variable createFromSyntax(int smiSyntax) {
     if (!SNMP4JSettings.isExtensibilityEnabled()) {
@@ -237,7 +241,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
     if (registeredSyntaxes == null) {
       registerSyntaxes();
     }
-    Class<? extends Variable> c = registeredSyntaxes.get(new Integer(smiSyntax));
+    Class<? extends Variable> c = registeredSyntaxes.get(smiSyntax);
     if (c == null) {
       throw new IllegalArgumentException("Unsupported variable syntax: " +
                                          smiSyntax);
@@ -260,8 +264,8 @@ public abstract class AbstractVariable implements Variable, Serializable {
   /**
    * Register SNMP syntax classes from a properties file. The registered
    * syntaxes are used by the {@link #createFromBER} method to type-safe
-   * instantiate sub-classes from <code>Variable</code> from an BER encoded
-   * <code>InputStream</code>.
+   * instantiate sub-classes from {@code Variable} from an BER encoded
+   * {@code InputStream}.
    */
   @SuppressWarnings("unchecked")
   private synchronized static void registerSyntaxes() {
@@ -312,7 +316,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
   /**
    * Gets the ASN.1 syntax identifier value of this SNMP variable.
    * @return
-   *    an integer value < 128 for regular SMI objects and a value >= 128
+   *    an integer value less than 128 for regular SMI objects and a value greater or equal than 128
    *    for exception values like noSuchObject, noSuchInstance, and
    *    endOfMibView.
    */
@@ -322,8 +326,8 @@ public abstract class AbstractVariable implements Variable, Serializable {
    * Checks whether this variable represents an exception like
    * noSuchObject, noSuchInstance, and endOfMibView.
    * @return
-   *    <code>true</code> if the syntax of this variable is an instance of
-   *    <code>Null</code> and its syntax equals one of the following:
+   *    {@code true} if the syntax of this variable is an instance of
+   *    {@code Null} and its syntax equals one of the following:
    *    <UL>
    *    <LI>{@link SMIConstants#EXCEPTION_NO_SUCH_OBJECT}</LI>
    *    <LI>{@link SMIConstants#EXCEPTION_NO_SUCH_INSTANCE}</LI>
@@ -371,7 +375,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
    * @param syntax
    *    the BER code of the syntax.
    * @return
-   *    a textual description like 'Integer32' for <code>syntax</code>
+   *    a textual description like 'Integer32' for {@code syntax}
    *    as used in the Structure of Management Information (SMI) modules.
    *    '?' is returned if the supplied syntax is unknown.
    */
@@ -440,7 +444,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
   }
 
   /**
-   * Converts the value of this <code>Variable</code> to a (sub-)index
+   * Converts the value of this {@code Variable} to a (sub-)index
    * value.
    * @param impliedLength
    *    specifies if the sub-index has an implied length. This parameter applies
@@ -455,7 +459,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
   public abstract OID toSubIndex(boolean impliedLength);
 
   /**
-   * Sets the value of this <code>Variable</code> from the supplied (sub-)index.
+   * Sets the value of this {@code Variable} from the supplied (sub-)index.
    * @param subIndex
    *    the sub-index OID.
    * @param impliedLength
@@ -478,7 +482,7 @@ public abstract class AbstractVariable implements Variable, Serializable {
    * the actual encoding of the Variable itself with {@link #encodeBER}.
    *
    * @return
-   *    <code>false</code> by default. Derived classes may override this
+   *    {@code false} by default. Derived classes may override this
    *    if implementing dynamic {@link Variable} instances.
    * @since 1.8
    */
@@ -493,8 +497,8 @@ public abstract class AbstractVariable implements Variable, Serializable {
    * @param b
    *   another variable.
    * @return
-   *   <code>true</code> if
-   *   <code>a == null) ?  (b == null) : a.equals(b)</code>.
+   *   {@code true} if
+   *   {@code a == null) ?  (b == null) : a.equals(b)}.
    *   @since 2.0
    */
   public static boolean equal(AbstractVariable a, AbstractVariable b) {

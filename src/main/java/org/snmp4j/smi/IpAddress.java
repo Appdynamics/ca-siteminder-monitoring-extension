@@ -1,23 +1,38 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - IpAddress.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
+import java.io.*;
+import java.net.*;
 import org.snmp4j.asn1.BER;
 import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.log.LogAdapter;
 import org.snmp4j.log.LogFactory;
+import org.snmp4j.log.LogAdapter;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
+/**
+ * The <code>IpAddress</code> class represents an IPv4 address SNMP variable.
+ *
+ * @author Frank Fock
+ * @version 1.10.3
+ * @since 1.0
+ */
 public class IpAddress extends SMIAddress implements AssignableFromByteArray {
 
   private static final long serialVersionUID = -146846354059565449L;
@@ -29,7 +44,7 @@ public class IpAddress extends SMIAddress implements AssignableFromByteArray {
 
   public static final InetAddress ANY_IPADDRESS = createAnyAddress();
 
-  private InetAddress inetAddress;
+  private java.net.InetAddress inetAddress;
 
   /**
    * Creates a <code>0.0.0.0</code> IP address.
@@ -143,22 +158,21 @@ public class IpAddress extends SMIAddress implements AssignableFromByteArray {
     return (o instanceof IpAddress) && (compareTo((IpAddress)o) == 0);
   }
 
-  public void decodeBER(BERInputStream inputStream) throws IOException {
+  public void decodeBER(BERInputStream inputStream) throws java.io.IOException {
     BER.MutableByte type = new BER.MutableByte();
     byte[] value = BER.decodeString(inputStream, type);
     if (type.getValue() != BER.IPADDRESS) {
       throw new IOException("Wrong type encountered when decoding Counter: "+
                             type.getValue());
     }
-    //Changed by AppDynamics 2016
-    if (value.length != 4 && value.length != 16) {
+    if (value.length != 4) {
       throw new IOException("IpAddress encoding error, wrong length: " +
                             value.length);
     }
     inetAddress = InetAddress.getByAddress(value);
   }
 
-  public void encodeBER(OutputStream outputStream) throws IOException {
+  public void encodeBER(OutputStream outputStream) throws java.io.IOException {
     byte[] address = new byte[4];
     if (inetAddress instanceof Inet6Address) {
       Inet6Address v6Addr = (Inet6Address)inetAddress;
@@ -181,7 +195,7 @@ public class IpAddress extends SMIAddress implements AssignableFromByteArray {
     this.inetAddress = InetAddress.getByAddress(rawValue);
   }
 
-  public void setInetAddress(InetAddress inetAddress) {
+  public void setInetAddress(java.net.InetAddress inetAddress) {
     this.inetAddress = inetAddress;
   }
 

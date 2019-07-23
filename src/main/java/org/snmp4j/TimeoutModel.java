@@ -1,18 +1,28 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
-
-
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - TimeoutModel.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 
 package org.snmp4j;
 
 /**
- * The <code>TimeoutModel</code> is the common interface for all models
+ * The {@code TimeoutModel} is the common interface for all models
  * of timing out a SNMP request. The default model is a linear model, thus
  * each retry has the same delay as specified by the {@link Target#getTimeout()}
  * value.
@@ -25,7 +35,7 @@ public interface TimeoutModel {
 
   /**
    * Gets the timeout for the specified retry (a zero value for
-   * <code>retryCount</code> specifies the first request).
+   * {@code retryCount} specifies the first request).
    * @param retryCount
    *    the number of retries already performed for the target.
    * @param totalNumberOfRetries
@@ -42,8 +52,8 @@ public interface TimeoutModel {
    * Gets the timeout for all retries, which is defined as the sum of
    * {@link #getRetryTimeout(int retryCount, int totalNumberOfRetries,
    * long targetTimeout)}
-   * for all <code>retryCount</code> in
-   * <code>0 <= retryCount < totalNumberOfRetries</code>.
+   * for all {@code retryCount} in
+   * {@code 0 &lz;= retryCount &lt; totalNumberOfRetries}.
    *
    * @param totalNumberOfRetries
    *    the total number of retries configured for the target.

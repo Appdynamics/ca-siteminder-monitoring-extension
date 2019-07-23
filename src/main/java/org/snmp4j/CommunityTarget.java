@@ -1,17 +1,31 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - CommunityTarget.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.mp.MPv1;
+import org.snmp4j.mp.MPv2c;
 import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
-import org.snmp4j.smi.Address;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.Address;
+import org.snmp4j.mp.SnmpConstants;
 
 /**
  * A <code>CommunityTarget</code> represents SNMP target properties for
@@ -60,7 +74,7 @@ public class CommunityTarget extends AbstractTarget {
   /**
    * Sets the community octet sting. This is a convenience method to set the
    * security name for community based SNMP (v1 and v2c). It basically checks
-   * that the community is not <code>null</code> and then calls {@link #setSecurityName(OctetString)}
+   * that the community is not <code>null</code> and then calls {@link #setSecurityName(org.snmp4j.smi.OctetString)}
    * with the supplied parameter.
    * @param community
    *    an <code>OctetString</code> instance which must not be

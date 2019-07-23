@@ -1,21 +1,31 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - OctetString.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
+import java.io.*;
+import java.util.*;
 import org.snmp4j.asn1.BER;
 import org.snmp4j.asn1.BERInputStream;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.*;
-
 /**
- * The <code>OctetString</code> class represents the SMI type OCTET STRING.
+ * The {@code OctetString} class represents the SMI type OCTET STRING.
  *
  * @author Frank Fock
  * @version 1.8
@@ -51,13 +61,35 @@ public class OctetString extends AbstractVariable
    *    an array of bytes.
    * @param offset
    *    the position (zero based) of the first byte to be copied from
-   *    <code>rawValue</code>into the new <code>OctetSring</code>.
+   *    {@code rawValue}into the new {@code OctetString}.
    * @param length
    *    the number of bytes to be copied.
    */
   public OctetString(byte[] rawValue, int offset, int length) {
     value = new byte[length];
     System.arraycopy(rawValue, offset, value, 0, length);
+  }
+
+  /**
+   * Creates a concatenated octet string from two byte arrays.
+   * @param rawValuePrefix
+   *    an array of bytes.
+   * @param rawValueSuffix
+   *    an array of bytes which will appended to rawValuePrefix to form this new OctetString. If rawValueSuffix is
+   *    {@code null} then the result will be the same as with a zero length suffix array.
+   * @since 2.6.0
+   */
+  public OctetString(byte[] rawValuePrefix, byte[] rawValueSuffix) {
+    if (rawValueSuffix == null) {
+      value = new byte[rawValuePrefix.length];
+    }
+    else {
+      value = new byte[rawValuePrefix.length + rawValueSuffix.length];
+    }
+    System.arraycopy(rawValuePrefix, 0, value, 0, rawValuePrefix.length);
+    if (rawValueSuffix != null) {
+      System.arraycopy(rawValueSuffix, 0, value, rawValuePrefix.length, rawValueSuffix.length);
+    }
   }
 
   /**
@@ -74,7 +106,7 @@ public class OctetString extends AbstractVariable
    * Creates an octet string from another OctetString by cloning its value.
    *
    * @param other
-   *    an <code>OctetString</code> instance.
+   *    an {@code OctetString} instance.
    */
   public OctetString(OctetString other) {
     this.value = new byte[0];
@@ -108,14 +140,14 @@ public class OctetString extends AbstractVariable
   /**
    * Appends an octet string.
    * @param octetString
-   *   an <code>OctetString</code> to append to this octet string.
+   *   an {@code OctetString} to append to this octet string.
    */
   public void append(OctetString octetString) {
     append(octetString.getValue());
   }
 
   /**
-   * Appends the supplied string to this <code>OctetString</code>. Calling this
+   * Appends the supplied string to this {@code OctetString}. Calling this
    * method is identical to <I>append(string.getBytes())</I>.
    * @param string
    *    a String instance.
@@ -131,11 +163,11 @@ public class OctetString extends AbstractVariable
     value = new byte[0];
   }
 
-  public void encodeBER(OutputStream outputStream) throws IOException {
+  public void encodeBER(OutputStream outputStream) throws java.io.IOException {
     BER.encodeString(outputStream, BER.OCTETSTRING, getValue());
   }
 
-  public void decodeBER(BERInputStream inputStream) throws IOException {
+  public void decodeBER(BERInputStream inputStream) throws java.io.IOException {
     BER.MutableByte type = new BER.MutableByte();
     byte[] v = BER.decodeString(inputStream, type);
     if (type.getValue() != BER.OCTETSTRING) {
@@ -160,7 +192,7 @@ public class OctetString extends AbstractVariable
    * @return
    *    the byte value at the specified index.
    * @throws ArrayIndexOutOfBoundsException
-   *    if <code>index</code> &lt; 0 or &gt; {@link #length()}.
+   *    if {@code index} &lt; 0 or &gt; {@link #length()}.
    */
   public final byte get(int index) {
     return value[index];
@@ -178,12 +210,9 @@ public class OctetString extends AbstractVariable
     value[index] = b;
   }
 
+  @Override
   public int hashCode() {
-    int hash = 0;
-    for (int i=0; i<value.length; i++) {
-      hash += value[i]*31^((value.length-1)-i);
-    }
-    return hash;
+    return Arrays.hashCode(getValue());
   }
 
   public boolean equals(Object o) {
@@ -199,7 +228,7 @@ public class OctetString extends AbstractVariable
    * @param v
    *    the byte array to compare with this OctetStrings value member.
    * @return
-   *    <code>Arrays.equals(value, (byte[])v)</code>
+   *    {@code Arrays.equals(value, (byte[])v)}
    * @since 2.0
    */
   public boolean equalsValue(byte[] v) {
@@ -227,9 +256,9 @@ public class OctetString extends AbstractVariable
 
   /**
    * Returns a new string that is a substring of this string. The substring
-   * begins at the specified <code>beginIndex</code> and extends to the
-   * character at index <code>endIndex - 1</code>.
-   * Thus the length of the substring is <code>endIndex-beginIndex</code>.
+   * begins at the specified {@code beginIndex} and extends to the
+   * character at index {@code endIndex - 1}.
+   * Thus the length of the substring is {@code endIndex-beginIndex}.
    * @param beginIndex
    *    the beginning index, inclusive.
    * @param endIndex
@@ -252,8 +281,8 @@ public class OctetString extends AbstractVariable
    * @param prefix
    *    the prefix.
    * @return
-   *    <code>true</code> if the bytes of this octet string up to the length
-   *    of <code>prefix</code> equal those of <code>prefix</code>.
+   *    {@code true} if the bytes of this octet string up to the length
+   *    of {@code prefix} equal those of {@code prefix}.
    * @since 1.2
    */
   public boolean startsWith(OctetString prefix) {
@@ -272,11 +301,11 @@ public class OctetString extends AbstractVariable
    * Determines whether this octet string contains non ISO control characters
    * only.
    * @return
-   *    <code>false</code> if this octet string contains any ISO control
-   *    characters as defined by <code>Character.isISOControl(char)</code>
+   *    {@code false} if this octet string contains any ISO control
+   *    characters as defined by {@link Character#isISOControl(char)}
    *    except if these ISO control characters are all whitespace characters
-   *    as defined by <code>Character.isWhitespace(char)</code> and not
-   *    <code>'&#92;u001C'</code>-<code>'&#92;u001F'</code>.
+   *    as defined by {@link Character#isWhitespace(char)} and not
+   *    {@code '&#92;u001C'}-{@code '&#92;u001F'}.
    */
   public boolean isPrintable() {
     for (byte aValue : value) {
@@ -333,7 +362,7 @@ public class OctetString extends AbstractVariable
    *    a string of characters a-f,A-F,0-9 with length 2*b, where b is the length
    *    of the string in bytes.
    * @return
-   *    an OctetString instance with the length <code>hexString.length()/2</code>.
+   *    an OctetString instance with the length {@code hexString.length()/2}.
    * @since 2.1
    */
   public static OctetString fromHexStringPairs(String hexString) {
@@ -346,12 +375,12 @@ public class OctetString extends AbstractVariable
   }
 
   /**
-   * Creates an OctetString from a string represantation in the specified
+   * Creates an OctetString from a string representation in the specified
    * radix.
    * @param string
    *    the string representation of an octet string.
    * @param radix
-   *    the radix of the string represantion.
+   *    the radix of the string representation.
    * @return
    *    the OctetString instance.
    * @since 1.6
@@ -368,7 +397,7 @@ public class OctetString extends AbstractVariable
 
   public String toString(char separator, int radix) {
     int digits = (int)(Math.round((float)Math.log(256)/Math.log(radix)));
-    StringBuffer buf = new StringBuffer(value.length*(digits+1));
+    StringBuilder buf = new StringBuilder(value.length*(digits+1));
     for (int i=0; i<value.length; i++) {
       if (i > 0) {
         buf.append(separator);
@@ -386,7 +415,7 @@ public class OctetString extends AbstractVariable
   /**
    * Returns a string representation of this octet string in the radix
    * specified. There will be no separation characters, but each byte will
-   * be represented by <code>round(log(256)/log(radix))</code> digits.
+   * be represented by {@code round(log(256)/log(radix))} digits.
    *
    * @param radix
    *    the radix to use in the string representation.
@@ -396,7 +425,7 @@ public class OctetString extends AbstractVariable
    */
   public String toString(int radix) {
     int digits = (int)(Math.round((float)Math.log(256)/Math.log(radix)));
-    StringBuffer buf = new StringBuffer(value.length*(digits+1));
+    StringBuilder buf = new StringBuilder(value.length*(digits+1));
     for (byte aValue : value) {
       int v = (aValue & 0xFF);
       String val = Integer.toString(v, radix);
@@ -419,7 +448,7 @@ public class OctetString extends AbstractVariable
    * @since 1.6
    */
   public String toASCII(char placeholder) {
-    StringBuffer buf = new StringBuffer(value.length);
+    StringBuilder buf = new StringBuilder(value.length);
     for (byte aValue : value) {
       if ((Character.isISOControl((char) aValue)) ||
           ((aValue & 0xFF) >= 0x80)) {
@@ -450,7 +479,7 @@ public class OctetString extends AbstractVariable
   /**
    * Gets the length of the byte string.
    * @return
-   *    an integer >= 0.
+   *    a zero or positive integer value.
    */
   public final int length() {
     return value.length;
@@ -461,7 +490,7 @@ public class OctetString extends AbstractVariable
   }
 
   /**
-   * Returns the length of the payload of this <code>BERSerializable</code>
+   * Returns the length of the payload of this {@code BERSerializable}
    * object in bytes when encoded according to the Basic Encoding Rules (BER).
    *
    * @return the BER encoded length of this variable.
@@ -524,7 +553,7 @@ public class OctetString extends AbstractVariable
   }
 
   /**
-   * Splits an <code>OctetString</code> using a set of delimiter characters
+   * Splits an {@code OctetString} using a set of delimiter characters
    * similar to how a StringTokenizer would do it.
    * @param octetString
    *    the input string to tokenize.
@@ -571,13 +600,13 @@ public class OctetString extends AbstractVariable
   }
 
   /**
-   * Creates an <code>OctetString</code> from an byte array.
+   * Creates an {@code OctetString} from an byte array.
    * @param value
    *    a byte array that is copied into the value of the created
-   *     <code>OctetString</code> or <code>null</code>.
+   *     {@code OctetString} or {@code null}.
    * @return
-   *    an OctetString or <code>null</code> if <code>value</code>
-   *    is <code>null</code>.
+   *    an OctetString or {@code null} if {@code value}
+   *    is {@code null}.
    * @since 1.7
    */
   public static OctetString fromByteArray(byte[] value) {

@@ -1,26 +1,38 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - AbstractTarget.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
 import org.snmp4j.smi.Address;
+import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.OctetString;
 
 import java.util.List;
 
 /**
- * A <code>AbstratTarget</code> class is an abstract representation of a remote
+ * A {@code AbstractTarget} class is an abstract representation of a remote
  * SNMP entity. It represents a target with an Address object, as well protocol
  * parameters such as retransmission and timeout policy. Implementers of the
- * <code>Target</code> interface can subclass <code>AbstractTarget</code> to
- * take advantage of the implementation of common <code>Target</code>
+ * {@link Target} interface can subclass {@code AbstractTarget} to
+ * take advantage of the implementation of common {@code Target}
  * properties.
  *
  * @author Frank Fock
@@ -49,7 +61,7 @@ public abstract class AbstractTarget implements Target {
   /**
    * Creates a SNMPv3 target with no retries and a timeout of one second.
    * @param address
-   *    an <code>Address</code> instance.
+   *    an {@code Address} instance.
    */
   protected AbstractTarget(Address address) {
     this.address = address;
@@ -83,9 +95,9 @@ public abstract class AbstractTarget implements Target {
    * target.
    * @param version
    *    the message processing model ID.
-   * @see SnmpConstants#version1
-   * @see SnmpConstants#version2c
-   * @see SnmpConstants#version3
+   * @see org.snmp4j.mp.SnmpConstants#version1
+   * @see org.snmp4j.mp.SnmpConstants#version2c
+   * @see org.snmp4j.mp.SnmpConstants#version3
    */
   public void setVersion(int version) {
     this.version = version;
@@ -95,9 +107,9 @@ public abstract class AbstractTarget implements Target {
    * Gets the SNMP version (NMP messagen processing model) of the target.
    * @return
    *    the message processing model ID.
-   * @see SnmpConstants#version1
-   * @see SnmpConstants#version2c
-   * @see SnmpConstants#version3
+   * @see org.snmp4j.mp.SnmpConstants#version1
+   * @see org.snmp4j.mp.SnmpConstants#version2c
+   * @see org.snmp4j.mp.SnmpConstants#version3
    */
   public int getVersion() {
     return version;
@@ -119,7 +131,7 @@ public abstract class AbstractTarget implements Target {
   /**
    * Gets the number of retries.
    * @return
-   *    an integer >= 0.
+   *    an integer &gt;= 0.
    */
   public int getRetries() {
     return retries;
@@ -177,12 +189,14 @@ public abstract class AbstractTarget implements Target {
    * Sets the prioritised list of transport mappings to be used for this
    * target. The first mapping in the list that matches the target address
    * will be chosen for sending new requests. If the value is set to
-   * <code>null</code> (default), the appropriate {@link TransportMapping}
-   * will be chosen by the supplied <code>address</code> of the target.
+   * {@code null} (default), the appropriate {@link TransportMapping}
+   * will be chosen by the supplied {@code address} of the target.
    * If an entity supports more than one {@link TransportMapping} for
    * an {@link Address} class, the the results are not defined.
    * This situation can be controlled by setting this preferredTransports
    * list.
+   * @param preferredTransports
+   *    a list of transport mappings that are preferred for this target class.
    * @since 2.0
    */
   public void setPreferredTransports(List<TransportMapping<? extends Address>>
@@ -231,11 +245,11 @@ public abstract class AbstractTarget implements Target {
    * the security name set for this target.
    * @param securityLevel
    *   one of
-   *   <P><UL>
-   *   <LI>{@link SecurityLevel#NOAUTH_NOPRIV}
-   *   <LI>{@link SecurityLevel#AUTH_NOPRIV}
-   *   <LI>{@link SecurityLevel#AUTH_PRIV}
-   *   </UL></P>
+   *   <UL>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#NOAUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_NOPRIV}</LI>
+   *   <LI>{@link org.snmp4j.security.SecurityLevel#AUTH_PRIV}</LI>
+   *   </UL>
    */
   public void setSecurityLevel(int securityLevel) {
     this.securityLevel = securityLevel;
@@ -244,7 +258,7 @@ public abstract class AbstractTarget implements Target {
   /**
    * Sets the security model for this target.
    * @param securityModel
-   *    an <code>int</code> value as defined in the {@link SecurityModel}
+   *    an {@code int} value as defined in the {@link org.snmp4j.security.SecurityModel}
    *    interface or any third party subclass thereof.
    */
   public void setSecurityModel(int securityModel) {
@@ -254,7 +268,7 @@ public abstract class AbstractTarget implements Target {
   /**
    * Sets the security name to be used with this target.
    * @param securityName
-   *    an <code>OctetString</code> instance (must not be <code>null</code>).
+   *    an {@code OctetString} instance (must not be {@code null}).
    * @see #getSecurityName()
    */
   public final void setSecurityName(OctetString securityName) {

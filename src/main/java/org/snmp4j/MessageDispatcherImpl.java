@@ -1,42 +1,45 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - MessageDispatcherImpl.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j;
 
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.asn1.BEROutputStream;
-import org.snmp4j.event.AuthenticationFailureEvent;
-import org.snmp4j.event.AuthenticationFailureListener;
-import org.snmp4j.event.CounterEvent;
-import org.snmp4j.event.CounterListener;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
+import java.io.IOException;
+import java.util.*;
+
+import org.snmp4j.asn1.*;
+import org.snmp4j.event.*;
+import org.snmp4j.log.*;
 import org.snmp4j.mp.*;
 import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.TsmSecurityStateReference;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.GenericAddress;
-import org.snmp4j.smi.Integer32;
-import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.*;
+import java.nio.ByteBuffer;
 import org.snmp4j.transport.UnsupportedAddressClassException;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
-
 /**
- * The <code>MessageDispatcherImpl</code> decodes and dispatches incoming
+ * The {@code MessageDispatcherImpl} decodes and dispatches incoming
  * messages using {@link MessageProcessingModel} instances and encodes
  * and sends outgoing messages using an appropriate {@link TransportMapping}
  * instances.
- * <p>
+ *
  * The method {@link #processMessage} will be called from a
- * <code>TransportMapping</code> whereas the method {@link #sendPdu} will be
+ * {@code TransportMapping} whereas the method {@link #sendPdu} will be
  * called by the application.
  *
  * @see Snmp
@@ -106,7 +109,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    * @param transport
    *    a TransportMapping instance. If there is already another transport
    *    mapping registered that supports the same address class, then
-   *    <code>transport</code> will be registered but not used for messages
+   *    {@code transport} will be registered but not used for messages
    *    without specific transport mapping.
    */
   @SuppressWarnings("unchecked")
@@ -126,7 +129,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    *    a previously added TransportMapping instance.
    * @return
    *    the supplied TransportMapping if it has been successfully removed,
-   *    <code>null</code>otherwise.
+   *    {@code null}otherwise.
    */
   public TransportMapping removeTransportMapping(TransportMapping transport) {
     List<? extends TransportMapping> tm =
@@ -168,17 +171,19 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Sends a message using the <code>TransportMapping</code> that has been
+   * Sends a message using the {@code TransportMapping} that has been
    * assigned for the supplied address type.
    *
    * @param transport
    *    the transport mapping to be used to send the message.
    * @param destAddress
    *    the transport address where to send the message. The
-   *    <code>destAddress</code> must be compatible with the supplied
-   *    <code>transport</code>.
+   *    {@code destAddress} must be compatible with the supplied
+   *    {@code transport}.
    * @param message
    *    the SNMP message to send.
+   * @param tmStateReference
+   *    the transport state reference that holds transport state information for this message.
    * @throws IOException
    *    if an I/O error occurred while sending the message or if there is
    *    no transport mapping defined for the supplied address type.
@@ -211,8 +216,8 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    * @param destAddress
    *    an Address instance.
    * @return
-   *    a <code>TransportMapping</code> instance that can be used to sent
-   *    a SNMP message to <code>destAddress</code> or <code>null</code> if
+   *    a {@code TransportMapping} instance that can be used to sent
+   *    a SNMP message to {@code destAddress} or {@code null} if
    *    such a transport mapping does not exists.
    * @since 1.6
    */
@@ -234,13 +239,13 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    *
    *
    * @param sourceTransport
-   *   a <code>TransportMapping</code> that matches the incomingAddress type.
+   *   a {@link TransportMapping} that matches the incomingAddress type.
    * @param mp
-   *   a <code>MessageProcessingModel</code> to process the message.
+   *   a {@link MessageProcessingModel} to process the message.
    * @param incomingAddress
-   *   the <code>Address</code> from the entity that sent this message.
+   *   the {@link Address} from the entity that sent this message.
    * @param wholeMessage
-   *   the <code>BERInputStream</code> containing the SNMP message.
+   *   the {@link BERInputStream} containing the SNMP message.
    * @param tmStateReference
    *   the transport model state reference as defined by RFC 5590.
    * @throws IOException
@@ -331,7 +336,10 @@ public class MessageDispatcherImpl implements MessageDispatcher {
           break;
         }
       }
-      logger.warn("statusInfo="+statusInfo+", status="+status);
+      if (logger.isInfoEnabled()) {
+        logger.info("Message from "+incomingAddress+" not dispatched, reason: statusInfo=" +
+                statusInfo + ", status=" + status);
+      }
     }
   }
 
@@ -582,7 +590,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
           }
           pdu.setType(PDU.GETNEXT);
           if (!(pdu instanceof PDUv1)) {
-            pdu.setMaxRepetitions(1);
+            pdu.setMaxRepetitions(0);
             pdu.setNonRepeaters(0);
           }
         }
@@ -673,11 +681,11 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Fires a <code>CommandResponderEvent</code>. Listeners are called
+   * Fires a {@code CommandResponderEvent}. Listeners are called
    * in order of their registration  until a listener has processed the
    * PDU successfully.
    * @param e
-   *   a <code>CommandResponderEvent</code> event.
+   *   a {@code CommandResponderEvent} event.
    */
   protected void fireProcessPdu(CommandResponderEvent e) {
     if (commandResponderListeners != null) {
@@ -694,7 +702,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Gets the <code>MessageProcessingModel</code> for the supplied message
+   * Gets the {@link MessageProcessingModel} for the supplied message
    * processing model ID.
    *
    * @param messageProcessingModel
@@ -702,7 +710,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    *    (see {@link MessageProcessingModel#getID()}).
    * @return
    *    a MessageProcessingModel instance if the ID is known, otherwise
-   *    <code>null</code>
+   *    {@code null}
    */
   public MessageProcessingModel getMessageProcessingModel(int messageProcessingModel) {
     try {
@@ -714,9 +722,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Removes a <code>CounterListener</code>.
+   * Removes a {@code CounterListener}.
    * @param counterListener
-   *    a previously added <code>CounterListener</code>.
+   *    a previously added {@code CounterListener}.
    */
   public synchronized void removeCounterListener(CounterListener counterListener) {
     if (counterListeners != null && counterListeners.contains(counterListener)) {
@@ -725,9 +733,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Adds a <code>CounterListener</code>.
+   * Adds a {@code CounterListener}.
    * @param counterListener
-   *    a <code>CounterListener</code> that will be informed when a counter
+   *    a {@code CounterListener} that will be informed when a counter
    *    needs to incremented.
    */
   public synchronized void addCounterListener(CounterListener counterListener) {
@@ -742,7 +750,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   /**
    * Fires a counter incrementation event.
    * @param event
-   *    the <code>CounterEvent</code> containing the OID of the counter
+   *    the {@code CounterEvent} containing the OID of the counter
    *    that needs to be incremented.
    */
   protected void fireIncrementCounter(CounterEvent event) {
@@ -764,9 +772,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    * The default is consistency checks enabled.
    *
    * @param checkOutgoingMsg
-   *    if <code>true</code> outgoing messages are checked for consistency.
+   *    if {@code true} outgoing messages are checked for consistency.
    *    Currently, only the PDU type will be checked against the used SNMP
-   *    version. If <code>false</code>, no checks will be performed.
+   *    version. If {@code false}, no checks will be performed.
    */
   public void setCheckOutgoingMsg(boolean checkOutgoingMsg) {
     this.checkOutgoingMsg = checkOutgoingMsg;
@@ -775,8 +783,8 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   /**
    * Returns whether consistency checks for outgoing messages are activated.
    * @return
-   *    if <code>true</code> outgoing messages are checked for consistency.
-   *    If <code>false</code>, no checks are performed.
+   *    if {@code true} outgoing messages are checked for consistency.
+   *    If {@code false}, no checks are performed.
    */
   public boolean isCheckOutgoingMsg() {
     return checkOutgoingMsg;
@@ -786,7 +794,7 @@ public class MessageDispatcherImpl implements MessageDispatcher {
    * Adds a listener for authentication failure events caused by unauthenticated
    * incoming messages.
    * @param l
-   *    the <code>AuthenticationFailureListener</code> to add.
+   *    the {@code AuthenticationFailureListener} to add.
    * @since 1.5
    */
   public synchronized void addAuthenticationFailureListener(
@@ -800,9 +808,9 @@ public class MessageDispatcherImpl implements MessageDispatcher {
   }
 
   /**
-   * Removes an <code>AuthenticationFailureListener</code>.
+   * Removes an {@code AuthenticationFailureListener}.
    * @param l
-   *   the <code>AuthenticationFailureListener</code> to remove.
+   *   the {@code AuthenticationFailureListener} to remove.
    */
   public synchronized void removeAuthenticationFailureListener(
       AuthenticationFailureListener l) {

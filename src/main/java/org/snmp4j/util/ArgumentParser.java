@@ -1,25 +1,36 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - ArgumentParser.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.util;
 
+import java.text.*;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.snmp4j.smi.OctetString;
 
-import java.text.ParseException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
- * The <code>ArgumentParser</code> parsers a command line array into Java
+ * The {@code ArgumentParser} parsers a command line array into Java
  * objects and associates each object with the corresponding command line option
  * according to predefined schemes for options and parameters.
  * <p>
- * The format specification for options is:
+ * The format specification for options is:</p>
  * <pre>
  * [-&lt;option&gt;\[&lt;type&gt;[\&lt;&lt;regex&gt;\&gt;]{&lt;parameter&gt;[=&lt;default&gt;]}\]] ...
  * </pre>
@@ -30,14 +41,13 @@ import java.util.regex.Pattern;
  * <li>&lt;option&gt; is the name of the option, for example 'h' for 'help'</li>
  * <li>&lt;type&gt; is one of 'i' (integer), 'l' (long), 'o' (octet string),
  * and 's' (string)</li>
- * </li>&lt;regex&gt; is a regular expression pattern that describes valid
+ * <li>&lt;regex&gt; is a regular expression pattern that describes valid
  * values</li>
- * </li>&lt;default&gt; is a default value. If a default value is given, then
+ * <li>&lt;default&gt; is a default value. If a default value is given, then
  * a mandatory option is in fact optional</li>
  * </ul>
- * </p>
  * <p>
- * The format specification for parameters is:
+ * The format specification for parameters is:</p>
  * <pre>
  * [-&lt;parameter&gt;[&lt;type&gt;[&lt;&lt;regex&gt;&gt;]{[=&lt;default&gt;]}]]... [+&lt;optionalParameter&gt;[&lt;type&gt;[&lt;&lt;regex&gt;&gt;]{[=&lt;default&gt;]}]]... [&lt;..&gt;]
  * </pre>
@@ -47,13 +57,11 @@ import java.util.regex.Pattern;
  * optional parameter which must not be followed by a mandatory parameter</li>
  * <li>&lt;parameter&gt; is the name of the parameter, for example 'port'</li>
  * <li>&lt;type&gt; is one of 'i' (integer), 'l' (long), and 's' (string)</li>
- * </li>&lt;regex&gt; is a regular expression pattern that describes valid
- * values</li>
+ * <li>&lt;regex&gt; is a regular expression pattern that describes valid values</li>
  * <li>&lt;default&gt; is a default value</li>
  * <li>&lt;..&gt; (two consecutive dots after a space at the end of the pattern)
- * indicate that the last parameter may occur more than once
+ * indicate that the last parameter may occur more than once</li>
  * </ul>
- * </p>
  *
  * @author Frank Fock
  * @version 1.10
@@ -275,15 +283,20 @@ public class ArgumentParser {
     for (ArgumentFormat of : optionFormat.values()) {
       if (of.isMandatory() && !options.containsKey(of.getOption())) {
         List defaults = new ArrayList();
-        for (int i = 0; i < of.getParameters().length; i++) {
-          if (of.getParameters()[i].getDefaultValue() != null) {
-            defaults.add(parseParameterValue(of.getParameters()[i],
-                of.getParameters()[i].getDefaultValue(),
-                of, i));
+        if (of.getParameters() != null) {
+          for (int i = 0; i < of.getParameters().length; i++) {
+            if (of.getParameters()[i] == null) {
+              continue;
+            }
+            if (of.getParameters()[i].getDefaultValue() != null) {
+              defaults.add(parseParameterValue(of.getParameters()[i],
+                      of.getParameters()[i].getDefaultValue(),
+                      of, i));
+            }
           }
         }
         if (defaults.size() == 0) {
-          throw new ArgumentParseException(-1, null, of, of.getParameters()[0]);
+          throw new ArgumentParseException(-1, null, of, ((of.getParameters() != null && of.getParameters().length > 0) ? of.getParameters()[0] : null));
         } else {
           addValues2Option(of.getOption(), defaults, options);
         }
@@ -330,7 +343,7 @@ public class ArgumentParser {
   protected Object parseParameterValue(ArgumentParameter type,
                                        String value,
                                        ArgumentFormat format, int pos) throws
-      ArgumentParseException
+      org.snmp4j.util.ArgumentParser.ArgumentParseException
   {
     if (value.startsWith("'") && value.endsWith("'")) {
       value = value.substring(1, value.length()-2);
@@ -436,8 +449,8 @@ public class ArgumentParser {
                                   ArgumentParameter parameterFormatDetail) {
       super((value != null)
             ? "Invalid value '"+value+"' at position "+position
-            : "Mandatory parameter "+parameterFormat.getOption()+"("+
-            parameterFormatDetail.getName()+") not specified", position);
+            : "Mandatory parameter "+((parameterFormat ==  null) ? "<unknown>" : parameterFormat.getOption())+"("+
+              ((parameterFormatDetail == null) ? "<unknown>" : parameterFormatDetail.getName())+") not specified", position);
       this.parameterFormat = parameterFormat;
       this.parameterFormatDetail = parameterFormatDetail;
       this.value = value;
@@ -470,10 +483,10 @@ public class ArgumentParser {
   /**
    * Gets the first option value of a list of values - if available.
    * @param optionValues
-   *    a probably empty list of values - could be <code>null</code>.
+   *    a probably empty list of values - could be {@code null}.
    * @return
-   *    the first option value in <code>optionValues</code> if it exists,
-   *    <code>null</code> otherwise.
+   *    the first option value in {@code optionValues} if it exists,
+   *    {@code null} otherwise.
    * @since 1.9.2
    */
   public static Object getFirstValue(List<? extends Object> optionValues) {
@@ -484,7 +497,7 @@ public class ArgumentParser {
   }
 
   /**
-   * Gets the <code>n</code>-th option value of a list of values - if available.
+   * Gets the {@code n}-th option value of a list of values - if available.
    * @param args
    *    a parameter and options list.
    * @param name
@@ -492,8 +505,8 @@ public class ArgumentParser {
    * @param index
    *    the index (zero based) of the option/parameter value to return.
    * @return
-   *    the <code>n</code>-th (zero based) option value in
-   *    <code>args.get(name)</code> if it exists, <code>null</code> otherwise.
+   *    the {@code n}-th (zero based) option value in
+   *    {@code args.get(name)} if it exists, {@code null} otherwise.
    * @since 1.10
    */
   public static Object getValue(Map args, String name, int index) {
@@ -507,17 +520,17 @@ public class ArgumentParser {
   /**
    * Test application to try out patterns and command line parameters.
    * The default option and parameter patterns can be overridden by setting
-   * the system properties <code>org.snmp4j.OptionFormat</code> and
-   * <code>org.snmp4j.ParameterFormat</code> respectively.
+   * the system properties {@code org.snmp4j.OptionFormat} and
+   * {@code org.snmp4j.ParameterFormat} respectively.
    * <p>
    * The given command line is parsed using the specified patterns and the
    * parsed values are returned on the console output.
    * </p>
    * <p>
-   * The default option pattern is <code>-o1[i{parameter1}] -o2[s,l]</code>
+   * The default option pattern is {@code -o1[i{parameter1}] -o2[s,l]}
    * and the default parameter pattern is
-   * <code>-param1[i] -param2[s<(udp|tcp):.*[/[0-9]+]?>] +optParam1[l{=-100}] ..
-   * </code>
+   * {@code -param1[i] -param2[s<(udp|tcp):.*[/[0-9]+]?>] +optParam1[l{=-100}] ..
+   * }
    * </p>
    * @param args
    *    the command line arguments to match with the specified format patterns.
@@ -556,8 +569,8 @@ public class ArgumentParser {
    * @return
    *    the command set matching the command in the argument list.
    * @throws ParseException
-   *    if the command found in <code>args</code> cannot be found in the
-   *    <code>commandSets</code>, or <code>null</code> if <code>args</code>
+   *    if the command found in {@code args} cannot be found in the
+   *    {@code commandSets}, or {@code null} if {@code args}
    *    does not contain any command.
    * @since 1.10
    */
@@ -569,9 +582,9 @@ public class ArgumentParser {
         new ArgumentParser(optionFormat, "#command[s] +following[s] ..");
     Map params = ap.parse(args);
     String command = (String) ArgumentParser.getValue(params, "command", 0);
-    for (int j=0; j<commandSets.length; j++) {
-      if (commandSets[j][0].equals(command)) {
-        return commandSets[j];
+    for (String[] commandSet : commandSets) {
+      if (commandSet[0].equals(command)) {
+        return commandSet;
       }
     }
     throw new ParseException("Command '"+command+"' not found", 0);

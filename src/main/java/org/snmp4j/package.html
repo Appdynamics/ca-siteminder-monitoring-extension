@@ -1,11 +1,3 @@
-<!--
-  ~ Copyright 2018. AppDynamics LLC and its affiliates.
-  ~ All Rights Reserved.
-  ~ This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
-  ~ The copyright notice above does not evidence any actual or intended publication of such source code.
-  ~
-  -->
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head><title>org.snmp4j</title>
@@ -15,7 +7,7 @@
   _##
   _##  SNMP4J
   _##
-  _##  Copyright 2003-2004  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  Copyright 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
   _##
   _##  Licensed under the Apache License, Version 2.0 (the "License");
   _##  you may not use this file except in compliance with the License.
@@ -39,6 +31,7 @@ The <code>org.snmp4j</code> classes are capable of creating, sending, and
 receiving SNMPv1/v2c/v3 messages. A SNMP message is composed of its message
 header and its PDU payload. This package contains three main groups of classes
 and interfaces:
+</p>
 <ul>
 <li>Classes for SNMP message and target creation
 <li>Classes for SNMP message sending (command generation)
@@ -49,18 +42,18 @@ The following UML package diagram illustrates the dependencies between the
 packages of the core SNMP4J API. Users of the API normally only need to use the
 <code>org.snmp4j</code> and the  <code>org.snmp4j.smi</code> packages directly.
 </p>
-<img name="SNMP4J UML Package Diagram" src="doc-files/packages.gif"
-     alt="SNMP4J UML Package Diagram"/>
+<img src="doc-files/packages.gif"
+     alt="SNMP4J UML Package Diagram">
 <p>
   The following UML class diagram shows the most important classes of the
   org.snmp4j package and their relationships (relationships to other packages
   are not shown):.
 </p>
-<img name="UML Class Diagram org.snmp4j" src="doc-files/org_snmp4j.gif"
-     alt="UML Class Diagram org.snmp4j"/>
+<img src="doc-files/org_snmp4j.gif"
+     alt="UML Class Diagram org.snmp4j">
 
 
-<h2>SNMP Messages and Targets</h2>
+<h1>SNMP Messages and Targets</h1>
 
 <p>
 To exchange a SNMP message with a remote system, that system has to be identified,
@@ -68,7 +61,6 @@ retransmission, and timeout policy information about the message exchange has
 to be specified. A remote system is specified with SNMP4J by creating a
 <code>Target</code> instance appropriate for the SNMP protocol to be used.
 </p>
-<p/>
   <ul>
   <li>For SNMPv1 and SNMPv2c the <code>CommunityTarget</code> has to be used
     which provides community information in addition to the
@@ -82,12 +74,12 @@ to be specified. A remote system is specified with SNMP4J by creating a
     security level, security model (i.e. USM), and authoritative engine ID.
   </li>
   </ul>
-<p/>
-
+<p>
 A SNMP message consists of the message's payload, the SNMP Protocol Data Unit
 (PDU) and a message header. Simplified said, in SNMP4J the message header
 information is represented by <code>Target</code> instances and the PDU is
 represented by one of the following classes:
+</p>
 <ul>
   <li>
         <code>PDUv1</code> (SNMPv1)
@@ -103,8 +95,8 @@ represented by one of the following classes:
 Thus, in order to be able to send a SNMP message with SNMP4J, a <code>PDU</code>
 instance and a <code>Target</code> instance have to be created.
 
-<h4>PDU Examples
-</h4>
+<h2>PDU Examples
+</h2>
 <ul>
   <li>SNMPv1/v2c GETNEXT PDU
     <pre>
@@ -171,8 +163,8 @@ pdu.add(new VariableBinding(new OID("1.3.6.1.2.1.2.2.1.1"+downIndex),
   </li>
 </ul>
 
-<h4>Target Examples
-</h4>
+<h1>Target Examples
+</h1>
 <ul>
   <li>Community Target
     <pre>
@@ -189,7 +181,7 @@ target.setVersion(SnmpConstants.version1);
 UserTarget target = new UserTarget();
 target.setAddress(targetAddress);
 target.setRetries(1);
-// set timeout to 500 milliseconds -> 2*500ms = 1s total timeout
+// set timeout to 500 milliseconds: 2*500ms = 1s total timeout
 target.setTimeout(500);
 target.setVersion(SnmpConstants.version3);
 target.setSecurityLevel(SecurityLevel.AUTH_PRIV);
@@ -198,7 +190,7 @@ target.setSecurityName(new OctetString("MD5DES"));
   </li>
 </ul>
 
-<h2>Sending SNMP messages</h2>
+<h1>Sending SNMP messages</h1>
 <p>
   SNMP message are sent with SNMP4J by using a instance of the SNMP
   <code>Session</code> interface. The default implementation of this interface
@@ -234,8 +226,8 @@ target.setSecurityName(new OctetString("MD5DES"));
   Blocking can be avoided by either using synchronous messages only or by
   decoupling the processing within the callback method.
 </p>
-<h4>Example for Sending a Synchronous Message
-</h4>
+<h2>Example for Sending a Synchronous Message
+</h2>
 <pre>
 import org.snmp4j.*;
 ...
@@ -254,8 +246,8 @@ else {
     System.out.println(response.getResponse().toString());
 }
 </pre>
-<h4>Example for Sending an Asynchronous Message
-</h4>
+<h2>Example for Sending an Asynchronous Message
+</h2>
 <pre>
 import org.snmp4j.*;
 import org.snmp4j.event.*;
@@ -284,7 +276,7 @@ ResponseListener listener = new ResponseListener() {
 snmp.sendPDU(request, target, null, listener);
 ...
 </pre>
-<h2>Receiving SNMP messages</h2>
+<h1>Receiving SNMP messages</h1>
 <p>
   SNMP4J receives SNMP messages through the listen port of transport mappings.
   In order to be able to receive responses or requests, that port needs to be
@@ -306,6 +298,7 @@ snmp.sendPDU(request, target, null, listener);
   The <code>Snmp</code> class processes responses to outstanding requests and
   forwards PDUs of other SNMP messages to registered <code>CommandResponder</code>
   listener instances. To receive SNMP messages it is thus sufficient to
+</p>
   <ol>
     <li>
       Create a <code>TransportMapping</code> and initialize its listen port
@@ -329,8 +322,8 @@ snmp.sendPDU(request, target, null, listener);
   additional information about the received SNMP message provided by the
   message processing model that has decoded the SNMP message.
 </p>
-<h4>Example for Receiving SNMP Messages
-</h4>
+<h2>Example for Receiving SNMP Messages
+</h2>
 <pre>
 import org.snmp4j.*;
 import org.snmp4j.smi.*;

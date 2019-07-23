@@ -1,40 +1,48 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - DefaultTcpTransportMapping.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.transport;
 
-import org.snmp4j.SNMP4JSettings;
-import org.snmp4j.TransportStateReference;
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BER.MutableByte;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.log.LogAdapter;
-import org.snmp4j.log.LogFactory;
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.TcpAddress;
-import org.snmp4j.util.CommonTimer;
-import org.snmp4j.util.WorkerTask;
-
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
+import org.snmp4j.TransportStateReference;
+import org.snmp4j.asn1.*;
+import org.snmp4j.asn1.BER.*;
+import org.snmp4j.log.*;
+import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.security.SecurityLevel;
+import org.snmp4j.smi.*;
+import org.snmp4j.SNMP4JSettings;
+import org.snmp4j.util.WorkerTask;
+import org.snmp4j.util.CommonTimer;
+
 /**
- * The <code>DefaultTcpTransportMapping</code> implements a TCP transport
+ * The {@code DefaultTcpTransportMapping} implements a TCP transport
  * mapping with the Java 1.4 new IO API.
- * <p>
+ *
  * It uses a single thread for processing incoming and outgoing messages.
- * The thread is started when the <code>listen</code> method is called, or
- * when an outgoing request is sent using the <code>sendMessage</code> method.
+ * The thread is started when the {@code listen} method is called, or
+ * when an outgoing request is sent using the {@code sendMessage} method.
  *
  * @author Frank Fock
  * @version 1.11
@@ -50,18 +58,17 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
   private static final LogAdapter logger =
       LogFactory.getLogger(DefaultTcpTransportMapping.class);
 
-  private Map<Address, SocketEntry> sockets = new Hashtable<Address, SocketEntry>();
-  private WorkerTask server;
-  private ServerThread serverThread;
+  protected Map<Address, SocketEntry> sockets = new Hashtable<Address, SocketEntry>();
+  protected WorkerTask server;
+  protected ServerThread serverThread;
 
-  private CommonTimer socketCleaner;
+  protected CommonTimer socketCleaner;
   // 1 minute default timeout
   private long connectionTimeout = 60000;
   private boolean serverEnabled = false;
 
   private static final int MIN_SNMP_HEADER_LENGTH = 6;
-  private MessageLengthDecoder messageLengthDecoder =
-      new SnmpMesssageLengthDecoder();
+  protected MessageLengthDecoder messageLengthDecoder = new SnmpMesssageLengthDecoder();
   private int maxBusyLoops = DEFAULT_MAX_BUSY_LOOPS;
 
   /**
@@ -91,18 +98,22 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
   }
 
   /**
-   * Listen for incoming and outgoing requests. If the <code>serverEnabled</code>
-   * member is <code>false</code> the server for incoming requests is not
+   * Listen for incoming and outgoing requests. If the {@code serverEnabled}
+   * member is {@code false} the server for incoming requests is not
    * started. This starts the internal server thread that processes messages.
    * @throws SocketException
    *    when the transport is already listening for incoming/outgoing messages.
    * @throws IOException
+   *    if the listen port could not be bound to the server thread.
    */
-  public synchronized void listen() throws IOException {
+  public synchronized void listen() throws java.io.IOException {
     if (server != null) {
       throw new SocketException("Port already listening");
     }
     serverThread = new ServerThread();
+    if (logger.isInfoEnabled()) {
+      logger.info("TCP address "+getListenAddress()+" bound successfully");
+    }
     server = SNMP4JSettings.getThreadFactory().createWorkerThread(
       "DefaultTCPTransportMapping_"+getAddress(), serverThread, true);
     if (connectionTimeout > 0) {
@@ -166,7 +177,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
   /**
    * Returns the name of the listen thread.
    * @return
-   *    the thread name if in listening mode, otherwise <code>null</code>.
+   *    the thread name if in listening mode, otherwise {@code null}.
    * @since 1.6
    */
   public String getThreadName() {
@@ -233,8 +244,8 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
    * @param remoteAddress
    *    the address of the peer socket.
    * @return
-   *    <code>true</code> if the connection has been closed and
-   *    <code>false</code> if there was nothing to close.
+   *    {@code true} if the connection has been closed and
+   *    {@code false} if there was nothing to close.
    * @throws IOException
    *    if the remote address cannot be closed due to an IO exception.
    * @since 1.7.1
@@ -245,6 +256,9 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     }
     SocketEntry entry = sockets.remove(remoteAddress);
     if (entry != null) {
+      if (entry.getSocketTimeout() != null) {
+        entry.getSocketTimeout().cancel();
+      }
       Socket s = entry.getSocket();
       if (s != null) {
         SocketChannel sc = entry.getSocket().getChannel();
@@ -268,18 +282,19 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
   /**
    * Sends a SNMP message to the supplied address.
    * @param address
-   *    an <code>TcpAddress</code>. A <code>ClassCastException</code> is thrown
-   *    if <code>address</code> is not a <code>TcpAddress</code> instance.
+   *    an {@code TcpAddress}. A {@code ClassCastException} is thrown
+   *    if {@code address} is not a {@code TcpAddress} instance.
    * @param message byte[]
    *    the message to sent.
    * @param tmStateReference
    *    the (optional) transport model state reference as defined by
    *    RFC 5590 section 6.1.
    * @throws IOException
+   *    if an IO exception occurs while trying to send the message.
    */
   public void sendMessage(TcpAddress address, byte[] message,
                           TransportStateReference tmStateReference)
-      throws IOException
+      throws java.io.IOException
   {
     if (server == null) {
       listen();
@@ -327,7 +342,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
    * until the {@link #listen()} method is called (if the transport is already
    * listening, {@link #close()} has to be called before).
    * @param serverEnabled
-   *    if <code>true</code> if the transport will listens for incoming
+   *    if {@code true} if the transport will listens for incoming
    *    requests after {@link #listen()} has been called.
    */
   public void setServerEnabled(boolean serverEnabled) {
@@ -340,7 +355,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
    * able to decode the total length of a message for this transport mapping
    * protocol(s).
    * @param messageLengthDecoder
-   *    a <code>MessageLengthDecoder</code> instance.
+   *    a {@code MessageLengthDecoder} instance.
    */
   public void setMessageLengthDecoder(MessageLengthDecoder messageLengthDecoder) {
     if (messageLengthDecoder == null) {
@@ -374,7 +389,9 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
 
   private synchronized void timeoutSocket(SocketEntry entry) {
     if (connectionTimeout > 0) {
-      socketCleaner.schedule(new SocketTimeout(entry), connectionTimeout);
+      SocketTimeout socketTimeout = new SocketTimeout(entry);
+      entry.setSocketTimeout(socketTimeout);
+      socketCleaner.schedule(socketTimeout, connectionTimeout);
     }
   }
 
@@ -394,7 +411,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
    * Sets optional server socket options. The default implementation does
    * nothing.
    * @param serverSocket
-   *    the <code>ServerSocket</code> to apply additional non-default options.
+   *    the {@code ServerSocket} to apply additional non-default options.
    */
   protected void setSocketOptions(ServerSocket serverSocket) {
   }
@@ -407,6 +424,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     private ByteBuffer readBuffer = null;
     private volatile int registrations = 0;
     private volatile int busyLoops = 0;
+    private SocketTimeout socketTimeout;
 
     public SocketEntry(TcpAddress address, Socket socket) {
       this.peerAddress = address;
@@ -495,25 +513,17 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     public String toString() {
       return "SocketEntry[peerAddress="+peerAddress+
           ",socket="+socket+",lastUse="+new Date(lastUse/SnmpConstants.MILLISECOND_TO_NANOSECOND)+
-          ",readBufferPosition="+((readBuffer== null)?-1:readBuffer.position())+
+          ",readBufferPosition="+((readBuffer== null)?-1:readBuffer.position())+ ",socketTimeout="+socketTimeout+
           "]";
     }
 
-    /*
-    public boolean equals(Object o) {
-      if (o instanceof SocketEntry) {
-        SocketEntry other = (SocketEntry)o;
-        return other.peerAddress.equals(peerAddress) &&
-            ((other.message == message) ||
-             ((message != null) && (message.equals(other.message))));
-      }
-      return false;
+    public SocketTimeout getSocketTimeout() {
+      return socketTimeout;
     }
 
-    public int hashCode() {
-      return peerAddress.hashCode();
+    public void setSocketTimeout(SocketTimeout socketTimeout) {
+      this.socketTimeout = socketTimeout;
     }
-*/
   }
 
   public static class SnmpMesssageLengthDecoder implements MessageLengthDecoder {
@@ -578,7 +588,9 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
       if (logger.isDebugEnabled()) {
         logger.debug("Scheduling " + nextRun);
       }
-      socketCleaner.schedule(new SocketTimeout(entry), nextRun);
+      SocketTimeout socketTimeout = new SocketTimeout(entry);
+      entry.setSocketTimeout(socketTimeout);
+      socketCleaner.schedule(socketTimeout, nextRun);
     }
 
     public boolean cancel(){
@@ -589,12 +601,28 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     }
   }
 
-  class ServerThread implements WorkerTask {
-    private byte[] buf;
+  @Override
+  public TcpAddress getListenAddress() {
+    int port = tcpAddress.getPort();
+    ServerThread serverThreadCopy = serverThread;
+    try {
+      port = ((InetSocketAddress)serverThreadCopy.ssc.getLocalAddress()).getPort();
+    }
+    catch (NullPointerException npe) {
+      // ignore
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return new TcpAddress(tcpAddress.getInetAddress(), port);
+  }
+
+
+  protected class ServerThread implements WorkerTask {
+    protected byte[] buf;
     private volatile boolean stop = false;
     private Throwable lastError = null;
     private ServerSocketChannel ssc;
-    private Selector selector;
+    protected Selector selector;
 
     private LinkedList<SocketEntry> pending = new LinkedList<SocketEntry>();
 
@@ -699,7 +727,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
 
     public void sendMessage(Address address, byte[] message,
                             TransportStateReference tmStateReference)
-        throws IOException
+        throws java.io.IOException
     {
       Socket s = null;
       SocketEntry entry = sockets.get(address);
@@ -979,8 +1007,8 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
       }
     }
 
-    private boolean readMessage(SelectionKey sk, SocketChannel readChannel,
-                                TcpAddress incomingAddress) throws IOException {
+    protected boolean readMessage(SelectionKey sk, SocketChannel readChannel,
+                                  TcpAddress incomingAddress) throws IOException {
       SocketEntry entry = (SocketEntry) sk.attachment();
       if (entry == null) {
         // slow but in some cases needed:
@@ -1061,8 +1089,8 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
       return false;
     }
 
-    private void readSnmpMessagePayload(SocketChannel readChannel, TcpAddress incomingAddress,
-                                        SocketEntry entry, ByteBuffer byteBuffer) throws IOException {
+    protected void readSnmpMessagePayload(SocketChannel readChannel, TcpAddress incomingAddress,
+                                          SocketEntry entry, ByteBuffer byteBuffer) throws IOException {
       MessageLength messageLength =
           messageLengthDecoder.getMessageLength(ByteBuffer.wrap(byteBuffer.array()));
       if (logger.isDebugEnabled()) {
@@ -1211,7 +1239,7 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     }
   }
 
-  private void addBufferToReadBuffer(SocketEntry entry, ByteBuffer byteBuffer) {
+  protected void addBufferToReadBuffer(SocketEntry entry, ByteBuffer byteBuffer) {
     if (logger.isDebugEnabled()) {
       logger.debug("Adding data "+byteBuffer+" to read buffer "+entry.getReadBuffer());
     }
@@ -1229,7 +1257,9 @@ public class DefaultTcpTransportMapping extends TcpTransportMapping {
     }
   }
 
-  private void socketClosedRemotely(SelectionKey sk, SocketChannel readChannel, TcpAddress incomingAddress) throws IOException {
+  protected void socketClosedRemotely(SelectionKey sk, SocketChannel readChannel, TcpAddress incomingAddress)
+          throws IOException
+  {
     logger.debug("Socket closed remotely");
     sk.cancel();
     readChannel.close();

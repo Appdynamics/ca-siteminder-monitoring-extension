@@ -1,23 +1,33 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - OID.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 package org.snmp4j.smi;
 
-import org.snmp4j.SNMP4JSettings;
+import java.io.*;
+import java.util.*;
 import org.snmp4j.asn1.BER;
 import org.snmp4j.asn1.BERInputStream;
+import org.snmp4j.SNMP4JSettings;
 import org.snmp4j.util.OIDTextFormat;
 import org.snmp4j.util.SimpleOIDTextFormat;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 /**
  * The Object Identifier Class.
@@ -25,7 +35,7 @@ import java.util.NoSuchElementException;
  * The Object Identifier (OID) class is the encapsulation of an
  * SMI object identifier. The SMI object is a data identifier for a
  * data element found in a Management Information Base (MIB), as
- * defined by a MIB definition. The <code>OID</code> class allows definition and
+ * defined by a MIB definition. The {@code OID} class allows definition and
  * manipulation of object identifiers.
  *
  * @author Frank Fock
@@ -53,7 +63,7 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Constructs an <code>OID</code> from a dotted string. The string can contain
+   * Constructs an {@code OID} from a dotted string. The string can contain
    * embedded strings enclosed by a single quote (') that are converted to
    * the corresponding OIO value. For example the following OID pairs are equal:
    * <pre>
@@ -74,10 +84,10 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Constructs an <code>OID</code> from an array of integer values.
+   * Constructs an {@code OID} from an array of integer values.
    * @param rawOID
-   *    an array of <code>int</code> values. The array
-   *    is copied. Later changes to <code>rawOID</code> will therefore not
+   *    an array of {@code int} values. The array
+   *    is copied. Later changes to {@code rawOID} will therefore not
    *    affect the OID's value.
    */
   public OID(int[] rawOID) {
@@ -85,17 +95,17 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Constructs an <code>OID</code> from two arrays of integer values where
+   * Constructs an {@code OID} from two arrays of integer values where
    * the first represents the OID prefix (i.e., the object class ID) and
    * the second one represents the OID suffix (i.e., the instance identifier).
    * @param prefixOID
-   *    an array of <code>int</code> values. The array
-   *    is copied. Later changes to <code>prefixOID</code> will therefore not
+   *    an array of {@code int} values. The array
+   *    is copied. Later changes to {@code prefixOID} will therefore not
    *    affect the OID's value.
    * @param suffixOID
-   *    an array of <code>int</code> values which will be appended to the
-   *    <code>prefixOID</code> OID. The array is copied. Later changes to
-   *    <code>suffixOID</code> will therefore not affect the OID's value.
+   *    an array of {@code int} values which will be appended to the
+   *    {@code prefixOID} OID. The array is copied. Later changes to
+   *    {@code suffixOID} will therefore not affect the OID's value.
    * @since 1.8
    */
   public OID(int[] prefixOID, int[] suffixOID) {
@@ -105,17 +115,17 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Constructs an <code>OID</code> from two arrays of integer values where
+   * Constructs an {@code OID} from two arrays of integer values where
    * the first represents the OID prefix (i.e., the object class ID) and
    * the second one represents the OID suffix (i.e., the instance identifier).
    * @param prefixOID
-   *    an array of <code>int</code> values. The array
-   *    is copied. Later changes to <code>prefixOID</code> will therefore not
+   *    an array of {@code int} values. The array
+   *    is copied. Later changes to {@code prefixOID} will therefore not
    *    affect the OID's value.
    * @param suffixID
-   *    an <code>int</code> value that will be appended to the
-   *    <code>prefixOID</code> OID. The array is copied. Later changes to
-   *    <code>prefixOID</code> will therefore not affect the OID's value.
+   *    an {@code int} value that will be appended to the
+   *    {@code prefixOID} OID. The array is copied. Later changes to
+   *    {@code prefixOID} will therefore not affect the OID's value.
    * @since 2.2.6
    */
   public OID(int[] prefixOID, int suffixID) {
@@ -125,18 +135,18 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Constructs an <code>OID</code> from an array of integer values.
+   * Constructs an {@code OID} from an array of integer values.
    * @param rawOID
-   *    an array of <code>int</code> values. The array
-   *    is copied. Later changes to <code>rawOID</code> will therefore not
+   *    an array of {@code int} values. The array
+   *    is copied. Later changes to {@code rawOID} will therefore not
    *    affect the OID's value.
    * @param offset
-   *    the zero based offset into the <code>rawOID</code> that points to the
+   *    the zero based offset into the {@code rawOID} that points to the
    *    first sub-identifier of the new OID.
    * @param length
-   *    the length of the new OID, where <code>offset + length</code> must be
-   *    less or equal the length of <code>rawOID</code>. Otherwise an
-   *    <code>IndexOutOfBoundsException</code> is thrown.
+   *    the length of the new OID, where {@code offset + length} must be
+   *    less or equal the length of {@code rawOID}. Otherwise an
+   *    {@code IndexOutOfBoundsException} is thrown.
    */
   public OID(int[] rawOID, int offset, int length) {
     setValue(rawOID, offset, length);
@@ -164,12 +174,9 @@ public class OID extends AbstractVariable
     return SMIConstants.SYNTAX_OBJECT_IDENTIFIER;
   }
 
+  @Override
   public int hashCode() {
-    int hash = 0;
-    for (int i=0; i<value.length; i++) {
-      hash += value[i]*31^((value.length-1)-i);
-    }
-    return hash;
+      return Arrays.hashCode(getValue());
   }
 
   public final boolean equals(Object o) {
@@ -237,7 +244,7 @@ public class OID extends AbstractVariable
   /**
    * Format the OID as text. This could return to same result as {@link #toString()}
    * but also fully converted index-to-text values like
-   * <code>snmp4jLogLoggerIndex.org.snmp4j.MessageDispatcherImpl</code>.
+   * {@code snmp4jLogLoggerIndex.org.snmp4j.MessageDispatcherImpl}.
 
    * @return
    *    a string representation of this OID as defined by the
@@ -261,11 +268,11 @@ public class OID extends AbstractVariable
 
   /**
    * Returns the content of the as a byte array. This method can be used
-   * to convert an index value to an <code>OctetString</code> or
-   * <code>IpAddress</code> instance.
+   * to convert an index value to an {@code OctetString} or
+   * {@code IpAddress} instance.
    *
    * @return
-   *    the sub-identifies of this <code>OID</code> as a byte array. Each
+   *    the sub-identifies of this {@code OID} as a byte array. Each
    *    sub-identifier value is masked with 0xFF to form a byte value.
    * @since 1.2
    */
@@ -277,7 +284,7 @@ public class OID extends AbstractVariable
     return b;
   }
 
-  public void encodeBER(OutputStream outputStream) throws IOException {
+  public void encodeBER(OutputStream outputStream) throws java.io.IOException {
     BER.encodeOID(outputStream, BER.OID, value);
   }
 
@@ -286,7 +293,7 @@ public class OID extends AbstractVariable
     return length + BER.getBERLengthOfLength(length) + 1;
   }
 
-  public void decodeBER(BERInputStream inputStream) throws IOException {
+  public void decodeBER(BERInputStream inputStream) throws java.io.IOException {
     BER.MutableByte type = new BER.MutableByte();
     int[] v = BER.decodeOID(inputStream, type);
     if (type.getValue() != BER.OID) {
@@ -332,13 +339,13 @@ public class OID extends AbstractVariable
   /**
    * Gets the sub-identifier value at the specified position.
    * @param index
-   *    a zero-based index into the <code>OID</code>.
+   *    a zero-based index into the {@code OID}.
    * @throws ArrayIndexOutOfBoundsException
-   *    if the index is out of range (index < 0 || index >= size()).
+   *    if the index is out of range (index &lt; 0 || index &gt;= size()).
    * @return
    *    the sub-indentifier value at <code>index</code>. NOTE: The returned
    *    value may be negative if the sub-identifier value is greater than
-   *    <code>2^31</code>.
+   *    {@code 2^31}.
    */
   public final int get(int index) {
     return value[index];
@@ -348,7 +355,7 @@ public class OID extends AbstractVariable
    * Gets the unsigned sub-identifier value at the specified position.
    * @param index int
    * @return
-   *    the sub-indentifier value at <code>index</code> as an unsigned long
+   *    the sub-identifier value at {@code index} as an unsigned long
    *    value.
    */
   public final long getUnsigned(int index) {
@@ -358,18 +365,18 @@ public class OID extends AbstractVariable
   /**
    * Sets the sub-identifier at the specified position.
    * @param index
-   *    a zero-based index into the <code>OID</code>.
+   *    a zero-based index into the {@code OID}.
    * @param value
    *    a 32bit unsigned integer value.
    * @throws ArrayIndexOutOfBoundsException
-   *    if the index is out of range (index < 0 || index >= size()).
+   *    if the index is out of range (index &lt; 0 || index &gt;= size()).
    */
   public final void set(int index, int value) {
     this.value[index] = value;
   }
 
   /**
-   * Appends a dotted String OID to this <code>OID</code>.
+   * Appends a dotted String OID to this {@code OID}.
    * @param oid
    *    a dotted String with numerical sub-identifiers.
    * @return
@@ -381,9 +388,9 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Appends an <code>OID</code> to this OID.
+   * Appends an {@code OID} to this OID.
    * @param oid
-   *    an <code>OID</code> instance.
+   *    an {@code OID} instance.
    * @return
    *    a pointer to this OID instance (useful for chaining).
    */
@@ -423,9 +430,9 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Checks whether this <code>OID</code> can be BER encoded.
+   * Checks whether this {@code OID} can be BER encoded.
    * @return
-   *    <code>true</code> if size() >= 2 and size() <= 128 and if the first
+   *    {@code true} if size() &gt;= 2 and size() &lt;= 128 and if the first
    *    two sub-identifiers are less than 3 and 40 respectively.
    */
   public boolean isValid() {
@@ -435,7 +442,7 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Returns the number of sub-identifiers in this <code>OID</code>.
+   * Returns the number of sub-identifiers in this {@code OID}.
    * @return
    *    an integer value between 0 and 128.
    */
@@ -444,19 +451,19 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Compares the n leftmost sub-identifiers with the given <code>OID</code>
+   * Compares the n leftmost sub-identifiers with the given {@code OID}
    * in left-to-right direction.
    * @param n
    *    the number of sub-identifiers to compare.
    * @param other
-   *    an <code>OID</code> to compare with this <code>OID</code>.
+   *    an {@code OID} to compare with this {@code OID}.
    * @return
    *    <UL>
-   *    <LI>0 if the first <code>n</code> sub-identifiers are the same.
-   *    <LI>&lt;0 if the first <code>n</code> sub-identifiers of this
-   *    <code>OID</code> are lexicographic less than those of the comparand.
-   *    <LI>&gt;0 if the first <code>n</code> sub-identifiers of this
-   *    <code>OID</code> are lexicographic greater than those of the comparand.
+   *    <LI>0 if the first {@code n} sub-identifiers are the same.
+   *    <LI>&lt;0 if the first {@code n} sub-identifiers of this
+   *    {@code OID} are lexicographic less than those of the comparand.
+   *    <LI>&gt;0 if the first {@code n} sub-identifiers of this
+   *    {@code OID} are lexicographic greater than those of the comparand.
    *    </UL>
    */
   public int leftMostCompare(int n, OID other) {
@@ -482,18 +489,18 @@ public class OID extends AbstractVariable
 
   /**
    * Compares the n rightmost sub-identifiers in direction right-to-left
-   * with those of the given <code>OID</code>.
+   * with those of the given {@code OID}.
    * @param n
    *    the number of sub-identifiers to compare.
    * @param other
-   *    an <code>OID</code> to compare with this <code>OID</code>.
+   *    an {@code OID} to compare with this {@code OID}.
    * @return
    *    <UL>
-   *    <LI>0 if the first <code>n</code> sub-identifiers are the same.
-   *    <LI>&lt;0 if the first <code>n</code> sub-identifiers of this
-   *    <code>OID</code> are lexicographic less than those of the comparand.
-   *    <LI>&gt;0 if the first <code>n</code> sub-identifiers of this
-   *    <code>OID</code> are lexicographic greater than those of the comparand.
+   *    <LI>0 if the first {@code n} sub-identifiers are the same.
+   *    <LI>&lt;0 if the first {@code n} sub-identifiers of this
+   *    {@code OID} are lexicographic less than those of the comparand.
+   *    <LI>&gt;0 if the first {@code n} sub-identifiers of this
+   *    {@code OID} are lexicographic greater than those of the comparand.
    *    </UL>
    */
   public int rightMostCompare(int n, OID other) {
@@ -535,7 +542,7 @@ public class OID extends AbstractVariable
   /**
    * Returns the last sub-identifier as an integer value. If this OID is
    * empty (i.e. has no sub-identifiers) then a
-   * <code>NoSuchElementException</code> is thrown
+   * {@link NoSuchElementException} is thrown
    * @return
    *    the value of the last sub-identifier of this OID as an integer value.
    *    Sub-identifier values greater than 2^31-1 will be returned as negative
@@ -552,7 +559,7 @@ public class OID extends AbstractVariable
   /**
    * Returns the last sub-identifier as an unsigned long value. If this OID is
    * empty (i.e. has no sub-identifiers) then a
-   * <code>NoSuchElementException</code> is thrown
+   * {@link NoSuchElementException} is thrown
    * @return
    *    the value of the last sub-identifier of this OID as an unsigned long.
    * @since 1.2
@@ -565,11 +572,11 @@ public class OID extends AbstractVariable
   }
 
   /**
-   * Removes the last sub-identifier (if available) from this <code>OID</code>
+   * Removes the last sub-identifier (if available) from this {@code OID}
    * and returns it.
    * @return
    *    the last sub-identifier or -1 if there is no sub-identifier left in
-   *    this <code>OID</code>.
+   *    this {@code OID}.
    */
   public int removeLast() {
     if (value.length == 0) {
@@ -585,8 +592,8 @@ public class OID extends AbstractVariable
   /**
    * Remove the n rightmost subidentifiers from this OID.
    * @param n
-   *    the number of subidentifiers to remove. If <code>n</code> is zero or
-   *    negative then this OID will not be changed. If <code>n</code> is greater
+   *    the number of subidentifiers to remove. If {@code n} is zero or
+   *    negative then this OID will not be changed. If {@code n} is greater
    *    than {@link #size()} all subidentifiers will be removed from this OID.
    */
   public void trim(int n) {
@@ -603,8 +610,8 @@ public class OID extends AbstractVariable
   /**
    * Returns a new copy of this OID with the last sub-indentifier removed.
    * @return
-   *    a copy of this OID with <code>n-1</code> sub-identifiers where
-   *    <code>n</code> is the size of this OID and greater than zero, otherwise
+   *    a copy of this OID with {@code n-1} sub-identifiers where
+   *    {@code n} is the size of this OID and greater than zero, otherwise
    *    a zero length OID is returned.
    * @since 1.11
    */
@@ -701,7 +708,7 @@ public class OID extends AbstractVariable
     }
     else if (next.size() > 1) {
       next.trim(1);
-      next = nextPeer();
+      next = next.nextPeer();
     }
     return next;
   }
@@ -713,7 +720,7 @@ public class OID extends AbstractVariable
    * @param b
    *    an OID.
    * @return
-   *    <code>a</code> if a &gt;= b, <code>b</code> otherwise.
+   *    {@code a} if a &gt;= b, {@code b} otherwise.
    * @since 1.7
    */
   public static OID max(OID a, OID b) {
@@ -730,7 +737,7 @@ public class OID extends AbstractVariable
    * @param b
    *    an OID.
    * @return
-   *    <code>a</code> if a &lt;= b, <code>b</code> otherwise.
+   *    {@code a} if a &lt;= b, {@code b} otherwise.
    * @since 1.7
    */
   public static OID min(OID a, OID b) {

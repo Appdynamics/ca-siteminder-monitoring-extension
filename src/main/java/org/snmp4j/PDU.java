@@ -1,29 +1,40 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - PDU.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 
 package org.snmp4j;
 
-import org.snmp4j.asn1.BER;
-import org.snmp4j.asn1.BERInputStream;
-import org.snmp4j.asn1.BERSerializable;
-import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.*;
-
+import org.snmp4j.asn1.*;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import org.snmp4j.smi.Integer32;
+import org.snmp4j.mp.SnmpConstants;
+import java.io.Serializable;
 
 /**
- * The <code>PDU</code> class represents a SNMP protocol data unit. The PDU
+ * The {@code PDU} class represents a SNMP protocol data unit. The PDU
  * version supported by the BER decoding and encoding methods of this class
  * is v2.
  * <p>
@@ -41,7 +52,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Denotes a get PDU.
    */
-  public static final int GET      = (BER.ASN_CONTEXT | BER.ASN_CONSTRUCTOR | 0x0);
+  public static final int GET      = (BER.ASN_CONTEXT | BER.ASN_CONSTRUCTOR);
   /**
    * Denotes a getnext (search) PDU.
    */
@@ -70,12 +81,12 @@ public class PDU implements BERSerializable, Serializable {
   public static final int INFORM   = (BER.ASN_CONTEXT | BER.ASN_CONSTRUCTOR | 0x6);
   /**
    * Denotes a SNMPv2c/v3 notification PDU (undistinguishable from
-   * {@link #TRAP}).
+   * {@code #TRAP}).
    */
   public static final int TRAP     = (BER.ASN_CONTEXT | BER.ASN_CONSTRUCTOR | 0x7);
   /**
    * Denotes a SNMPv2c/v3 notification PDU (undistinguishable from
-   * {@link #NOTIFICATION}).
+   * {@code #NOTIFICATION}).
    */
   public static final int NOTIFICATION = TRAP;
   /**
@@ -208,7 +219,7 @@ public class PDU implements BERSerializable, Serializable {
    * Copy constructor which creates a deep copy (clone) of the
    * other PDU.
    * @param other
-   *    the <code>PDU</code> to copy from.
+   *    the {@code PDU} to copy from.
    */
   public PDU(PDU other) {
     variableBindings = new Vector<VariableBinding>(other.size());
@@ -243,11 +254,11 @@ public class PDU implements BERSerializable, Serializable {
   }
 
   /**
-   * Adds a variable binding to this PDU. A <code>NullPointerException</code>
-   * is thrown if <code>VariableBinding</code> or its <code>Variable</code> is
-   * <code>null</code>.
+   * Adds a variable binding to this PDU. A {@code NullPointerException}
+   * is thrown if {@code VariableBinding} or its {@code Variable} is
+   * {@code null}.
    * @param vb
-   *   a <code>VariableBinding</code> instance.
+   *   a {@code VariableBinding} instance.
    */
   public void add(VariableBinding vb) {
     variableBindings.add(vb);
@@ -255,13 +266,13 @@ public class PDU implements BERSerializable, Serializable {
 
   /**
    * Adds a new variable binding to this PDU by using the OID of the supplied
-   * <code>VariableBinding</code>. The value portion is thus set to
-   * <code>null</code>.
-   * <p>
+   * {@code VariableBinding}. The value portion is thus set to
+   * {@code null}.
+   *
    * This method should be used for GET type requests. For SET, TRAP and INFORM
    * requests, the {@link #add} method should be used instead.
    * @param vb
-   *   a <code>VariableBinding</code> instance.
+   *   a {@code VariableBinding} instance.
    * @since 1.8
    */
   public void addOID(VariableBinding vb) {
@@ -273,14 +284,14 @@ public class PDU implements BERSerializable, Serializable {
    * Adds an array of variable bindings to this PDU (see
    * {@link #add(VariableBinding vb)}).
    * @param vbs
-   *   an array of <code>VariableBinding</code> instances. The instances in the
+   *   an array of {@code VariableBinding} instances. The instances in the
    *   array will be appended to the current list of variable bindings in the
    *   PDU.
    */
   public void addAll(VariableBinding[] vbs) {
     variableBindings.ensureCapacity(variableBindings.size()+vbs.length);
-    for (int i=0; i<vbs.length; i++) {
-      add(vbs[i]);
+    for (VariableBinding vb : vbs) {
+      add(vb);
     }
   }
 
@@ -288,7 +299,7 @@ public class PDU implements BERSerializable, Serializable {
    * Adds a list of variable bindings to this PDU (see
    * {@link #add(VariableBinding vb)}).
    * @param vbs
-   *   a list of <code>VariableBinding</code> instances. The instances in the
+   *   a list of {@code VariableBinding} instances. The instances in the
    *   list will be appended to the current list of variable bindings in the
    *   PDU.
    * @since 2.2.4
@@ -298,13 +309,13 @@ public class PDU implements BERSerializable, Serializable {
   }
 
   /**
-   * Adds new <code>VariableBindings</code> each with the OID of the
+   * Adds new {@code VariableBindings} each with the OID of the
    * corresponding variable binding of the supplied array to this PDU (see
    * {@link #addOID(VariableBinding vb)}).
    * @param vbs
-   *   an array of <code>VariableBinding</code> instances. For each instance
+   *   an array of {@code VariableBinding} instances. For each instance
    *   in the supplied array, a new VariableBinding created by
-   *   <code>new VariableBinding(OID)</code> will be appended to the current
+   *   {@code new VariableBinding(OID)} will be appended to the current
    *   list of variable bindings in the PDU.
    * @since 1.8
    */
@@ -318,9 +329,9 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the variable binding at the specified position.
    * @param index
-   *    a zero based positive integer (<code>0 <= index < {@link #size()}</code>)
+   *    a zero based positive integer ({@code 0 &lt;= index &lt; {@link #size()}})
    * @return
-   *    a VariableBinding instance. If <code>index</code> is out of bounds
+   *    a VariableBinding instance. If {@code index} is out of bounds
    *    an exception is thrown.
    */
   public VariableBinding get(int index) {
@@ -333,8 +344,8 @@ public class PDU implements BERSerializable, Serializable {
    *    the search {@link OID}.
    * @return
    *    the {@link Variable} of the first {@link VariableBinding}
-   *    whose prefix matches <code>oid</code>. If no such element
-   *    could be found, <code>null</code> is returned.
+   *    whose prefix matches {@code oid}. If no such element
+   *    could be found, {@code null} is returned.
    * @since 2.0
    */
   public Variable getVariable(OID prefix) {
@@ -353,7 +364,7 @@ public class PDU implements BERSerializable, Serializable {
    *    the search {@link OID}.
    * @return
    *    a List of all {@link VariableBinding}s
-   *    whose prefix matches <code>oid</code>. If no such element
+   *    whose prefix matches {@code oid}. If no such element
    *    could be found, an empty List is returned.
    */
   public List<VariableBinding> getBindingList(OID prefix) {
@@ -369,11 +380,11 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Sets the variable binding at the specified position.
    * @param index
-   *    a zero based positive integer (<code>0 <= index < {@link #size()}</code>)
-   *    If <code>index</code> is out of bounds
+   *    a zero based positive integer ({@code 0 &lt;= index &lt;} {@link #size()})
+   *    If {@code index} is out of bounds
    *    an exception is thrown.
    * @param vb
-   *    a VariableBinding instance (<code>null</code> is not allowed).
+   *    a VariableBinding instance ({@code null} is not allowed).
    * @return
    *    the variable binding that has been replaced.
    */
@@ -387,7 +398,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Removes the variable binding at the supplied position.
    * @param index
-   *    a position >= 0 and < {@link #size()}.
+   *    a position &gt;= 0 and &lt; {@link #size()}.
    */
   public void remove(int index) {
     variableBindings.remove(index);
@@ -405,7 +416,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the variable binding vector.
    * @return
-   *    the internal <code>Vector</code> containing the PDU's variable bindings.
+   *    the internal {@code Vector} containing the PDU's variable bindings.
    */
   public Vector<? extends VariableBinding> getVariableBindings() {
     return variableBindings;
@@ -459,7 +470,7 @@ public class PDU implements BERSerializable, Serializable {
    * @return
    *    a String containing an element of the
    *    {@link SnmpConstants#SNMP_ERROR_MESSAGES} array for a valid error status.
-   *    "Unknown error: <errorStatusNumber>" is returned for any other value.
+   *    "Unknown error: &lt;errorStatusNumber&gt;" is returned for any other value.
    */
   public String getErrorStatusText() {
     return toErrorStatusText(errorStatus.getValue());
@@ -472,7 +483,7 @@ public class PDU implements BERSerializable, Serializable {
    * @return
    *    a String containing an element of the
    *    {@link SnmpConstants#SNMP_ERROR_MESSAGES} array for a valid error status.
-   *    "Unknown error: <errorStatusNumber>" is returned for any other value.
+   *    "Unknown error: &lt;errorStatusNumber&gt;" is returned for any other value.
    * @since 1.7
    */
   public static String toErrorStatusText(int errorStatus) {
@@ -490,7 +501,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Sets the error index.
    * @param errorIndex
-   *    an integer value >= 0 where 1 denotes the first variable binding.
+   *    an integer value &gt;= 0 where 1 denotes the first variable binding.
    */
   public void setErrorIndex(int errorIndex) {
     this.errorIndex.setValue(errorIndex);
@@ -499,7 +510,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the error index.
    * @return
-   *   an integer value >= 0 where 1 denotes the first variable binding.
+   *   an integer value &gt;= 0 where 1 denotes the first variable binding.
    */
   public int getErrorIndex() {
     return errorIndex.getValue();
@@ -517,8 +528,8 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Checks whether this PDU is a {@link PDU#RESPONSE} or [@link PDU#REPORT}.
    * @return
-   *    <code>true</code> if {@link #getType()} returns {@link PDU#RESPONSE} or [@link PDU#REPORT} and
-   *    <code>false</code> otherwise.
+   *    {@code true} if {@link #getType()} returns {@link PDU#RESPONSE} or [@link PDU#REPORT} and
+   *    {@code false} otherwise.
    * @since 2.4.1
    */
   public boolean isResponsePdu() {
@@ -590,6 +601,8 @@ public class PDU implements BERSerializable, Serializable {
    * including the length of BER sequence length.
    * @param variableBindings
    *    a list of variable bindings.
+   * @return
+   *    the length in bytes of the BER encoded VB list.
    */
   public static int getBERLength(List<? extends VariableBinding> variableBindings) {
     int length = 0;
@@ -666,7 +679,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the request ID associated with this PDU.
    * @return
-   *    an <code>Integer32</code> instance.
+   *    an {@code Integer32} instance.
    */
   public Integer32 getRequestID() {
     return requestID;
@@ -675,7 +688,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Sets the request ID for this PDU. When the request ID is not set or set to
    * zero, the message processing model will generate a unique request ID for
-   * the <code>PDU</code> when sent.
+   * the {@code PDU} when sent.
    * @param requestID
    *    a unique request ID.
    */
@@ -688,7 +701,7 @@ public class PDU implements BERSerializable, Serializable {
    * @param type
    *    a PDU type.
    * @return
-   *    a string representation of <code>type</code>, for example "GET".
+   *    a string representation of {@code type}, for example "GET".
    */
   public static String getTypeString(int type) {
     switch (type) {
@@ -717,10 +730,10 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the PDU type identifier for a string representation of the type.
    * @param type
-   *    the string representation of a PDU type: <code>GET, GETNEXT, GETBULK,
-   *    SET, INFORM, RESPONSE, REPORT, TRAP, V1TRAP)</code>.
+   *    the string representation of a PDU type: {@code GET, GETNEXT, GETBULK,
+   *    SET, INFORM, RESPONSE, REPORT, TRAP, V1TRAP)}.
    * @return
-   *    the corresponding PDU type constant, or <code>Integer.MIN_VALUE</code>
+   *    the corresponding PDU type constant, or {@code Integer.MIN_VALUE}
    *    of the supplied type is unknown.
    */
   public static int getTypeFromString(String type) {
@@ -760,12 +773,12 @@ public class PDU implements BERSerializable, Serializable {
    * @return a string representation of the object.
    */
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(getTypeString(type));
     buf.append("[requestID=");
     buf.append(requestID);
     buf.append(", errorStatus=");
-    buf.append(getErrorStatusText()+"("+errorStatus+")");
+    buf.append(getErrorStatusText()).append("(").append(errorStatus).append(")");
     buf.append(", errorIndex=");
     buf.append(errorIndex);
     buf.append(", VBS[");
@@ -783,7 +796,7 @@ public class PDU implements BERSerializable, Serializable {
    * Gets the maximum repetitions of repeatable variable bindings in GETBULK
    * requests.
    * @return
-   *    an integer value >= 0.
+   *    an integer value &gt;= 0.
    */
   public int getMaxRepetitions() {
     return errorIndex.getValue();
@@ -793,7 +806,7 @@ public class PDU implements BERSerializable, Serializable {
    * Sets the maximum repetitions of repeatable variable bindings in GETBULK
    * requests.
    * @param maxRepetitions
-   *    an integer value >= 0.
+   *    an integer value &gt;= 0.
    */
   public void setMaxRepetitions(int maxRepetitions) {
     this.errorIndex.setValue(maxRepetitions);
@@ -802,7 +815,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Gets the number of non repeater variable bindings in a GETBULK PDU.
    * @return
-   *    an integer value >= 0 and <= {@link #size()}
+   *    an integer value &gt;= 0 and &lt;= {@link #size()}
    */
   public int getNonRepeaters() {
     return errorStatus.getValue();
@@ -811,7 +824,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Sets the number of non repeater variable bindings in a GETBULK PDU.
    * @param nonRepeaters
-   *    an integer value >= 0 and <= {@link #size()}
+   *    an integer value &gt;= 0 and &lt;= {@link #size()}
    */
   public void setNonRepeaters(int nonRepeaters) {
     this.errorStatus.setValue(nonRepeaters);
@@ -820,7 +833,7 @@ public class PDU implements BERSerializable, Serializable {
   /**
    * Returns an array with the variable bindings of this PDU.
    * @return
-   *    an array of <code>VariableBinding</code> instances of this PDU in the
+   *    an array of {@code VariableBinding} instances of this PDU in the
    *    same order as in the PDU.
    */
   public VariableBinding[] toArray() {

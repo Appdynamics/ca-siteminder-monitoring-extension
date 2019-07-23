@@ -1,10 +1,22 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- *
- */
+/*_############################################################################
+  _## 
+  _##  SNMP4J 2 - SnmpUriCallback.java  
+  _## 
+  _##  Copyright (C) 2003-2016  Frank Fock and Jochen Katz (SNMP4J.org)
+  _##  
+  _##  Licensed under the Apache License, Version 2.0 (the "License");
+  _##  you may not use this file except in compliance with the License.
+  _##  You may obtain a copy of the License at
+  _##  
+  _##      http://www.apache.org/licenses/LICENSE-2.0
+  _##  
+  _##  Unless required by applicable law or agreed to in writing, software
+  _##  distributed under the License is distributed on an "AS IS" BASIS,
+  _##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  _##  See the License for the specific language governing permissions and
+  _##  limitations under the License.
+  _##  
+  _##########################################################################*/
 
 package org.snmp4j.uri;
 
@@ -25,8 +37,8 @@ public interface SnmpUriCallback {
    * @param response
    *    a {@link SnmpUriResponse} instance with some or all
    *    of the requested data or an error status.
-   *    If the {@link SnmpUriResponse#getResponseType()}
-   *    is {@link SnmpUriResponse.Type#NEXT} then
+   *    If the {@link org.snmp4j.uri.SnmpUriResponse#getResponseType()}
+   *    is {@link org.snmp4j.uri.SnmpUriResponse.Type#NEXT} then
    *    additional calls for this request will follow, otherwise not.
    * @param url
    *    the URI that was used as request for this response.

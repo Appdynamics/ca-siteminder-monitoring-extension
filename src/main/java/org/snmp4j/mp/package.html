@@ -1,11 +1,3 @@
-<!--
-  ~ Copyright 2018. AppDynamics LLC and its affiliates.
-  ~ All Rights Reserved.
-  ~ This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
-  ~ The copyright notice above does not evidence any actual or intended publication of such source code.
-  ~
-  -->
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head>
@@ -41,26 +33,27 @@ Provides classes and interfaces for the SNMP message processing.
 The <code>org.snmp4j.mp</code> classes provide services to process SNMP
 messages. The services provided are defined in the
 <code>MessageProcessingModel</code> interface and include the following:
+</p>
 <ul>
 <li>Prepare data elements from an incoming SNMP message as described in
-  RFC3412 �7.2.
+  RFC3412 §7.2.
 </li>
-<li>Prepare a response message as defined in RFC3412 �7.1.
+<li>Prepare a response message as defined in RFC3412 §7.1.
 </li>
-<li>Prepare an outgoing message as defined in RFC3412 �7.1.
+<li>Prepare an outgoing message as defined in RFC3412 §7.1.
 </li>
 </ul>
-</p>
 <p>
 This interface is implemented
 by the message processing model classes for the SNMP versions 1, v2c, and v3:
 <code>MPv1</code>, <code>MPv2c</code>, and <code>MPv3</code>.
 </p>
+<p>
 The <code>MessageDispatcherImpl</code> chooses which message processing model
 it uses to process an outgoing or incoming SNMP message based on the SNMP
 version of the message. The SNMP version is either extracted from the message
 header (incoming message) or from the <code>Target</code> instance associated
-with the outgoing PDU (ougoing message).
+with the outgoing PDU (ougoing message).</p>
 <p>
 To be able to match requests and responses SNMP uses request IDs. Since request
 IDs are created by the command generator, the request IDs are unique within
@@ -86,7 +79,7 @@ and uses <code>PduHandle</code> instances instead.
   <code>org.snmp4j.mp</code> package and their relationships
   (relationships to other packages are not shown):
 </p>
-<img name="UML Class Diagram org.snmp4j.mp" src="doc-files/org_snmp4j_mp.gif"/>
+<img alt="UML Class Diagram for MP Package" src="doc-files/org_snmp4j_mp.gif">
 
 </body>
 </html>
