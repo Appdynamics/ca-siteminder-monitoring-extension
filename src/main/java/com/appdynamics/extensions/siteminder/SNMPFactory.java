@@ -8,13 +8,11 @@
 
 package com.appdynamics.extensions.siteminder;
 
+import org.apache.log4j.Logger;
 import org.snmp4j.*;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.security.*;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.GenericAddress;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.snmp4j.util.DefaultPDUFactory;
 import org.snmp4j.util.TreeUtils;
@@ -27,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import static com.appdynamics.extensions.siteminder.Util.convertToString;
 
 class SNMPFactory {
+
+    private static Logger logger = Logger.getLogger(SNMPFactory.class);
 
     //SNMP 1 & 2 constant
     private static final String DEFAULT_COMMUNITY_STRING = "public";
@@ -62,7 +62,8 @@ class SNMPFactory {
     }
 
     SNMPWalker createWalker(Snmp snmp,Target target, Map config){
-        TreeUtils treeUtils = new TreeUtils(snmp,new DefaultPDUFactory());
+        logger.debug("create Walker");
+        TreeUtils treeUtils = new TreeUtils(snmp,new DefaultPDUFactory(PDU.GETBULK));
         treeUtils.setMaxRepetitions(Integer.parseInt(convertToString(config.get("maxRepetitions"),DEFAULT_MAX_REPETITIONS)));
         return new SNMPWalker(target,treeUtils);
     }
@@ -90,12 +91,18 @@ class SNMPFactory {
 
     private UserTarget createUserTarget(Map config) {
         UserTarget usrTarget = new UserTarget();
+
+        Map snmp3Config = (Map) config.get("snmpV3Configuration");
+
         usrTarget.setVersion(SnmpConstants.version3);
-        Address targetAddress = GenericAddress.parse("udp:"+ convertToString(config.get("host"),"") + "/" + convertToString(config.get("port"),""));
+        UdpAddress targetAddress = new UdpAddress(convertToString(config.get("host"),"") + '/' + convertToString(config.get("port"),""));
+
+        //GenericAddress.parse("udp:"+ convertToString(config.get("host"),"") + "/" + convertToString(config.get("port"),""));
         usrTarget.setAddress(targetAddress);
+
         usrTarget.setRetries(Integer.parseInt(convertToString(config.get("retries"),DEFAULT_RETRIES)));
-        usrTarget.setSecurityLevel(Integer.parseInt(convertToString(config.get("retries"),DEFAULT_SECURITY_LEVEL)));
-        usrTarget.setSecurityName(new OctetString(convertToString(config.get("username"), DEFAULT_USERNAME_STRING)));
+        usrTarget.setSecurityLevel(Integer.parseInt(convertToString(snmp3Config.get("securityLevel"),DEFAULT_SECURITY_LEVEL)));
+        usrTarget.setSecurityName(new OctetString(convertToString(snmp3Config.get("username"), DEFAULT_USERNAME_STRING)));
         usrTarget.setTimeout(Long.parseLong(convertToString(config.get("timeout"),DEFAULT_TIMEOUT)));
 
         return usrTarget;
@@ -110,6 +117,9 @@ class SNMPFactory {
      *
      */
     private Snmp setSnmpSessionAttributesV3(Snmp snmp, Map config){
+
+        Map snmp3Config = (Map) config.get("snmpV3Configuration");
+
         byte[] defaultEngineId = MPv3.createLocalEngineID();
 
         OctetString os = new OctetString(defaultEngineId);
@@ -125,12 +135,12 @@ class SNMPFactory {
         SecurityModels.getInstance().addSecurityModel(usm);
         snmp.setLocalEngine(defaultEngineId,engineBoots,getEngineTime());
 
-        String securityLevel = convertToString(config.get("securityLevel"),"1");
-        String userName = convertToString(config.get("username"),"user");
-        String password = convertToString(config.get("password"),"password");
-        String authProtocol = convertToString(config.get("authProtocol"),"MD5");
-        String privateProtocol = convertToString(config.get("privProtocol"),"AES");
-        String privateProtocolPassword = convertToString(config.get("privProtocolPassword"),"password");
+        String securityLevel = convertToString(snmp3Config.get("securityLevel"),"1");
+        String userName = convertToString(snmp3Config.get("username"),"user");
+        String password = convertToString(snmp3Config.get("password"),"password");
+        String authProtocol = convertToString(snmp3Config.get("authProtocol"),"MD5");
+        String privateProtocol = convertToString(snmp3Config.get("privProtocol"),"AES");
+        String privateProtocolPassword = convertToString(snmp3Config.get("privProtocolPassword"),"password");
 
         if(securityLevel.equals(NO_AUTH_NO_PRIV))
         {
