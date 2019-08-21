@@ -9,9 +9,13 @@
 package com.appdynamics.extensions.siteminder;
 
 
+import com.appdynamics.extensions.siteminder.metrics.*;
+import com.appdynamics.extensions.util.AggregatorFactory;
 import com.appdynamics.extensions.yml.YmlReader;
 import org.snmp4j.Snmp;
 import org.snmp4j.Target;
+import org.snmp4j.log.Log4jLogFactory;
+import org.snmp4j.log.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,18 +25,73 @@ import java.util.Map;
 public class TestSnmp {
 
     static SNMPFactory factory = new SNMPFactory();
+    /* a utility to collect component metrics. */
+    static ComponentMetricsProcessor componentCollector = new ComponentMetricsProcessor();
 
+    /* a utility to collect cluster metrics. */
+    static ClusterMetricsProcessor clusterMetricsCollector = new ClusterMetricsProcessor();
     public static void main(String[] args) throws IOException {
-        Map config = YmlReader.readFromFileAsMap(new File("config.yml"));
-        Target target = factory.createTarget(config);
-        Snmp session = factory.createSNMPSession();
-        SNMPWalker walker = factory.createWalker(session,target,config);
-        List<String> oids = (List<String>)config.get("oids");
+
+        //LogFactory.setLogFactory(new Log4jLogFactory());
+        LogFactory.setLogFactory(new org.snmp4j.log.Log4jLogFactory());
+        Map config = YmlReader.readFromFileAsMap(new File(TestSnmp.class.getResource("/conf/config.yml").getPath()));
+        List<Map> instances = (List<Map>) config.get("instances");
+        Map instance = instances.get(0);
+        Target target = factory.createTarget(instance);
+        Snmp session = factory.createSNMPSession(instance);
+        SNMPWalker walker = factory.createWalker(session,target,instance);
+        List<String> oids = (List<String>)instance.get("test-oids");
         Map<String,Object> oidValueMap = walker.walk(oids);
         for(Map.Entry<String,Object> e : oidValueMap.entrySet()){
             System.out.println("success:oid"+e.getKey()+"::"+e.getValue());
         }
     }
+
+//
+//    public static void main(String[] args) throws IOException {
+//        Snmp session = null;
+//        LogFactory.setLogFactory(new org.snmp4j.log.Log4jLogFactory());
+//        Map config = YmlReader.readFromFileAsMap(new File(TestSnmp.class.getResource("/conf/config.yml").getPath()));
+//        List<Map> instances = (List<Map>) config.get("instances");
+//        Map instance = instances.get(0);
+//        try {
+//            session = factory.createSNMPSession(instance);
+//            Target target = factory.createTarget(instance);
+//            SNMPWalker walker = factory.createWalker(session, target, instance);
+//            ResourceIdentityMapper rim = new ResourceIdentityMapper(walker);
+//            //creates resource map to translate machine ids to names
+//            Map<String, Map> resourceIdentityMap = rim.mapResources(instance.get("resources"));
+//            @SuppressWarnings("unchecked")
+//            List<Map> components = (List<Map>) instance.get("metrics");
+//            MetricPropertiesBuilder propertiesBuilder = new MetricPropertiesBuilder();
+//            //a component can be policyServer,webAgents or likes
+//            for (Map component : components) {
+//                Map<String, MetricProperties> metricProps = propertiesBuilder.build(component);
+//                String componentName = component.get("component").toString();
+//                Map componentIdentityMap = resourceIdentityMap.get(componentName);
+//                //collects  component level metrics..for eg. for policyServer
+//                @SuppressWarnings("unchecked")
+//                List<Metric> componentMetrics = componentCollector.collect(componentName, walker, componentIdentityMap, metricProps);
+//                //collect all cluster level metrics
+//                AggregatorFactory aggregatorFactory = new AggregatorFactory();
+//                clusterMetricsCollector.collect(aggregatorFactory, componentMetrics);
+//                //metricPrinter.reportComponentMetrics(componentMetrics);
+//                //metricPrinter.reportClusterLevelMetrics(aggregatorFactory);
+//
+//            }
+//        } catch (IOException e) {
+//            System.out.println("Cannot create a SNMP UDP Session"+e);
+//        } finally {
+//            if (session != null) {
+//                try {
+//                    session.close();
+//                } catch (IOException e) {
+//                    System.out.println("Cannot close a SNMP UDP Session"+ e);
+//                }
+//            }
+//
+//        }
+//    }
 
     /*
     static Set<String> VALID_DATA_TYPES = Sets.newHashSet("Integer32","Counter","Counter64","Gauge");

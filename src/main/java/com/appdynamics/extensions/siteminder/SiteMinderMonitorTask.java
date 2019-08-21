@@ -76,7 +76,7 @@ public class SiteMinderMonitorTask implements Runnable{
     private BigDecimal extractAndReportMetrics(final MetricPrinter metricPrinter) {
         Snmp session = null;
         try {
-            session = snmpFactory.createSNMPSession();
+            session = snmpFactory.createSNMPSession(instance);
             Target target = snmpFactory.createTarget(instance);
             SNMPWalker walker = snmpFactory.createWalker(session,target,instance);
             ResourceIdentityMapper rim = new ResourceIdentityMapper(walker);
