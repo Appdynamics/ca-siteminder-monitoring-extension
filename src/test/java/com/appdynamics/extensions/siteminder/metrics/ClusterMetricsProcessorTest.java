@@ -9,9 +9,9 @@
 package com.appdynamics.extensions.siteminder.metrics;
 
 
-import com.appdynamics.extensions.util.Aggregator;
-import com.appdynamics.extensions.util.AggregatorFactory;
-import com.appdynamics.extensions.util.AggregatorKey;
+import com.appdynamics.extensions.metrics.Aggregator;
+import com.appdynamics.extensions.metrics.AggregatorFactory;
+import com.appdynamics.extensions.metrics.AggregatorKey;
 import org.junit.Assert;
 import org.junit.Test;
 

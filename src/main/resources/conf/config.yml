@@ -9,8 +9,8 @@
 metricPrefix: Server|Component:<COMPONENT_ID>|Custom Metrics|SiteMinder
 
 
-instances:
-  - host: "" 
+servers:
+  - host: "sample.host.com"
     port: 161
     communityString: public
     snmpVersion: 2 # Only required for snmp v1, will default to 2. Support only v1 and v2.

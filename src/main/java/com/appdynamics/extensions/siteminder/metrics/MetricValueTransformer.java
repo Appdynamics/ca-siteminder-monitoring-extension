@@ -9,14 +9,17 @@
 package com.appdynamics.extensions.siteminder.metrics;
 
 
-import com.appdynamics.extensions.util.DeltaMetricsCalculator;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import com.appdynamics.extensions.metrics.DeltaMetricsCalculator;
+import com.appdynamics.extensions.siteminder.SiteMinderMonitorTask;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 
 class MetricValueTransformer {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(MetricValueTransformer.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(MetricValueTransformer.class);
 
     private final DeltaMetricsCalculator deltaCalculator = new DeltaMetricsCalculator(10);
 

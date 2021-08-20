@@ -9,8 +9,10 @@
 package com.appdynamics.extensions.siteminder.metrics;
 
 
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.siteminder.SNMPWalker;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -23,7 +25,7 @@ import static com.appdynamics.extensions.siteminder.OIDUtils.getSuffixOfOID;
 
 public class ComponentMetricsProcessor {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ComponentMetricsProcessor.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(ComponentMetricsProcessor.class);
 
     private final MetricValueTransformer transformer = new MetricValueTransformer();
 

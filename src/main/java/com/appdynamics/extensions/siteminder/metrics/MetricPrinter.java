@@ -9,10 +9,10 @@
 package com.appdynamics.extensions.siteminder.metrics;
 
 
-import com.appdynamics.extensions.util.Aggregator;
-import com.appdynamics.extensions.util.AggregatorFactory;
-import com.appdynamics.extensions.util.AggregatorKey;
-import com.appdynamics.extensions.util.MetricWriteHelper;
+import com.appdynamics.extensions.metrics.Aggregator;
+import com.appdynamics.extensions.metrics.AggregatorFactory;
+import com.appdynamics.extensions.metrics.AggregatorKey;
+import com.appdynamics.extensions.MetricWriteHelper;
 import com.google.common.base.Strings;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import org.slf4j.LoggerFactory;
