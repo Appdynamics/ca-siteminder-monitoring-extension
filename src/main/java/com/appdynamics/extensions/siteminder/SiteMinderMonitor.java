@@ -77,17 +77,4 @@ public class SiteMinderMonitor extends ABaseMonitor {
     protected List<Map<String, ?>> getServers() {
         return (List<Map<String, ?>>) getContextConfiguration().getConfigYml().get("servers");
     }
-
-
-//    public static void main(String[] args) throws TaskExecutionException {
-//        ConsoleAppender ca = new ConsoleAppender();
-//        ca.setWriter(new OutputStreamWriter(System.out));
-//        ca.setLayout(new PatternLayout("%-5p [%t]: %m%n"));
-//        ca.setThreshold(Level.DEBUG);
-//        org.apache.log4j.Logger.getRootLogger().addAppender(ca);
-//        SiteMinderMonitor monitor = new SiteMinderMonitor();
-//        Map<String, String> taskArgs = Maps.newHashMap();
-//        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
-//        monitor.execute(taskArgs, null);
-//    }
 }

@@ -9,12 +9,14 @@
 package com.appdynamics.extensions.siteminder.metrics;
 
 
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.metrics.Aggregator;
 import com.appdynamics.extensions.metrics.AggregatorFactory;
 import com.appdynamics.extensions.metrics.AggregatorKey;
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.google.common.base.Strings;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
@@ -28,7 +30,7 @@ import static com.appdynamics.extensions.siteminder.Util.toBigIntString;
 
 public class MetricPrinter {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(MetricPrinter.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(MetricPrinter.class);
 
     private int totalMetricsReported;
     private String metricPrefix;
