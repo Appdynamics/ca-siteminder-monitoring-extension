@@ -10,27 +10,11 @@ package com.appdynamics.extensions.siteminder;
 
 
 import com.appdynamics.extensions.ABaseMonitor;
-import com.appdynamics.extensions.MetricWriteHelperFactory;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
 import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
-import com.appdynamics.extensions.MetricWriteHelper;
-import com.appdynamics.extensions.siteminder.instances.InstancesInfo;
-import com.appdynamics.extensions.util.AssertUtils;
-import com.appdynamics.extensions.util.CryptoUtils;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
-import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
-import com.singularity.ee.agent.systemagent.api.TaskOutput;
-import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
