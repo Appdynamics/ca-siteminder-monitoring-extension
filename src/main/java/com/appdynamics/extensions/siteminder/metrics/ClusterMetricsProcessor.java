@@ -8,17 +8,18 @@
 
 package com.appdynamics.extensions.siteminder.metrics;
 
-import com.appdynamics.extensions.util.AggregatorFactory;
-import com.appdynamics.extensions.util.AggregatorKey;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import com.appdynamics.extensions.metrics.AggregatorFactory;
+import com.appdynamics.extensions.metrics.AggregatorKey;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.List;
 
 
 public class ClusterMetricsProcessor {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ClusterMetricsProcessor.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(ClusterMetricsProcessor.class);
     static final String IND = "IND";
     static final String SUM = "SUM";
 

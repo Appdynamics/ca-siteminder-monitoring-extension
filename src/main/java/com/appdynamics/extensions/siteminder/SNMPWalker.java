@@ -9,9 +9,10 @@
 package com.appdynamics.extensions.siteminder;
 
 
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.snmp4j.Target;
 import org.snmp4j.smi.*;
 import org.snmp4j.util.TreeEvent;
@@ -28,7 +29,7 @@ public class SNMPWalker {
     private Target target;
     private TreeUtils treeUtils;
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(SNMPWalker.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(SNMPWalker.class);
 
     public SNMPWalker(Target target, TreeUtils treeUtils){
         this.target = target;

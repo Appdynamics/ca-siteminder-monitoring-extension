@@ -9,11 +9,13 @@
 package com.appdynamics.extensions.siteminder;
 
 
+import com.appdynamics.extensions.AMonitorTaskRunnable;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.siteminder.metrics.*;
-import com.appdynamics.extensions.util.AggregatorFactory;
-import com.appdynamics.extensions.util.MetricWriteHelper;
+import com.appdynamics.extensions.metrics.AggregatorFactory;
+import com.appdynamics.extensions.MetricWriteHelper;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.snmp4j.Snmp;
 import org.snmp4j.Target;
 
@@ -24,9 +26,12 @@ import java.util.Map;
 
 import static com.appdynamics.extensions.siteminder.Util.convertToString;
 
-public class SiteMinderMonitorTask implements Runnable{
+public class SiteMinderMonitorTask implements AMonitorTaskRunnable {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(SiteMinderMonitorTask.class);
+    private MetricWriteHelper metricWriter;
+
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(SiteMinderMonitorTask.class);
+
     private static final BigDecimal ERROR_VALUE = BigDecimal.ZERO;
     private static final BigDecimal SUCCESS_VALUE = BigDecimal.ONE;
     private static final String METRICS_COLLECTION_SUCCESSFUL = "Metrics Collection Successful";
@@ -38,7 +43,7 @@ public class SiteMinderMonitorTask implements Runnable{
     private Map instance;
 
     /* a facade to report metrics to the machine agent.*/
-    private MetricWriteHelper metricWriter;
+//    private MetricWriteHelper metricWriter;
 
     /* a SNMP Factory.*/
     private SNMPFactory snmpFactory;
@@ -116,6 +121,11 @@ public class SiteMinderMonitorTask implements Runnable{
         }
         return SUCCESS_VALUE;
 
+    }
+
+    @Override
+    public void onTaskComplete() {
+        logger.info("All tasks for server {} finished", convertToString(instance.get("displayName"),""));
     }
 
     static class Builder {
