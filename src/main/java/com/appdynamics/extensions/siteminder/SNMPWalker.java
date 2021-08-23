@@ -13,7 +13,6 @@ import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.snmp4j.Target;
 import org.snmp4j.smi.*;
 import org.snmp4j.util.TreeEvent;

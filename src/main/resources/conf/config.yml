@@ -5,11 +5,11 @@
 
 #This will create it in specific Tier/Component. Make sure to replace <COMPONENT_ID> with the appropriate one
 #from your environment. To find the <COMPONENT_ID> in your environment, please follow the screenshot in
-#https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
+#https://community.appdynamics.com/t5/Knowledge-Base/How-do-I-troubleshoot-missing-custom-metrics-or-extensions/ta-p/28695
 metricPrefix: Server|Component:<COMPONENT_ID>|Custom Metrics|SiteMinder
 
 
-servers:
+instances:
   - host: "sample.host.com"
     port: 161
     communityString: public

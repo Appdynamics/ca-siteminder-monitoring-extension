@@ -13,6 +13,7 @@ import com.appdynamics.extensions.ABaseMonitor;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
 import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import com.appdynamics.extensions.util.AssertUtils;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -26,37 +27,35 @@ import java.util.Map;
 public class SiteMinderMonitor extends ABaseMonitor {
 
     private static final Logger logger = ExtensionsLoggerFactory.getLogger(SiteMinderMonitor.class);
-    private static final String CONFIG_ARG = "config-file";
     private static final String METRIC_PREFIX = "Custom Metrics|SiteMinder|";
+    private static final String MONITOR_NAME = "Siteminder monitor";
     private long previousTimestamp = 0;
     private long currentTimestamp = System.currentTimeMillis();
 
-    private boolean initialized;
-    private MonitorContextConfiguration configuration;
-
     @Override
     protected String getDefaultMetricPrefix() {
-        return Constant.METRIC_PREFIX;
+        return METRIC_PREFIX;
     }
 
     @Override
     public String getMonitorName() {
-        return "Siteminder monitor";
+        return MONITOR_NAME;
     }
 
     @Override
     protected void doRun(TasksExecutionServiceProvider tasksExecutionServiceProvider) {
-        List<Map<String, ?>> servers = (List<Map<String, ?>>) getContextConfiguration().getConfigYml().get("servers");
+        List<Map<String, ?>> instances = (List<Map<String, ?>>) getContextConfiguration().getConfigYml().get("instances");
+        AssertUtils.assertNotNull(instances, "Instances cannot be null or empty in config");
         logger.debug("Started Extension");
         previousTimestamp = currentTimestamp;
         currentTimestamp = System.currentTimeMillis();
         if (previousTimestamp != 0) {
-            for (Map<String, ?> server : servers) {
+            for (Map<String, ?> instance : instances) {
                 try {
-                    SiteMinderMonitorTask task = createTask(server, tasksExecutionServiceProvider);
-                    tasksExecutionServiceProvider.submit((String) server.get("displayName"), task);
+                    SiteMinderMonitorTask task = createTask(instance, tasksExecutionServiceProvider);
+                    tasksExecutionServiceProvider.submit((String) instance.get("displayName"), task);
                 } catch (Exception e) {
-                    logger.error("Error while creating task for {}", Util.convertToString(server.get("displayName"), ""),e);
+                    logger.error("Error while creating task for {}", Util.convertToString(instance.get("displayName"), ""),e);
                 }
             }
         }
@@ -75,6 +74,6 @@ public class SiteMinderMonitor extends ABaseMonitor {
 
     @Override
     protected List<Map<String, ?>> getServers() {
-        return (List<Map<String, ?>>) getContextConfiguration().getConfigYml().get("servers");
+        return (List<Map<String, ?>>) getContextConfiguration().getConfigYml().get("instances");
     }
 }

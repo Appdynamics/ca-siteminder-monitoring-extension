@@ -13,7 +13,6 @@ import com.appdynamics.extensions.metrics.AggregatorFactory;
 import com.appdynamics.extensions.metrics.AggregatorKey;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 

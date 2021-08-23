@@ -11,36 +11,26 @@ policy-driven authorization, federation of identities, and complete auditing of 
 
 ## Prerequisites ##
 
-1. This extension extracts the metrics from CA SiteMinder through SNMP. For the extension to work, the SNMP subagent in SiteMinder needs to be started.
+1. Before the extension is installed, the prerequisites mentioned [here](https://community.appdynamics.com/t5/Knowledge-Base/Extensions-Prerequisites-Guide/ta-p/35213) need to be met. Please do not proceed with the extension installation if the specified prerequisites are not met
+
+2. This extension extracts the metrics from CA SiteMinder through SNMP. For the extension to work, the SNMP subagent in SiteMinder needs to be started.
 This snmp subagent module is found in the `<SiteMinder_Installation_Dir>\bin\snmprun.bat` on Windows. A similar location for UNIX can be easily located.
 The port on which the SNMP subagent is listening can be found from the `<SiteMinder_Installation_Dir>\config\snmp.conf` directory.
 
-2. The extension uses UDP to connect to SiteMinder. Please make sure that the necessary port is open for UDP traffic.
+3. The extension uses UDP to connect to SiteMinder. Please make sure that the necessary port is open for UDP traffic.
 
-3. The extension is pre-configured with metrics and their associated OIDs. In case if the OIDs need to be validated, the MIB file can be found
+4. The extension is pre-configured with metrics and their associated OIDs. In case if the OIDs need to be validated, the MIB file can be found
 in the `<SiteMinder_Installation_Dir>\MIB` directory.
 
+## Installation
+1. Run "mvn clean install"
+1. Unzip the contents of SiteMinderMonitor-\<version\>.zip file (&lt;CASiteMinderMonitor&gt; / targets) and copy the directory to `<your-machine-agent-dir>/monitors`.
+2. Edit config.yml file and provide the required configuration (see Configuration section)
+3. Restart the Machine Agent.
 
-## Troubleshooting steps ##
-1. Make sure to enable UDP traffic if not enabled by default.
+Please place the extension in the **"monitors"** directory of your **Machine Agent** installation directory. Do not place the extension in the **"extensions"** directory of your **Machine Agent** installation directory.
 
-2. Once the SNMP subagent module is started, the value for the respective OIDs can be viewed in a tool provided by CA. This tool can be found in
-the `<SiteMinder_Installation_Dir>\bin\snmpwalkrun.bat` directory.
-
-## Metrics Provided ##
-
-This extension extracts metrics for the policyServer and webagents components.
-
-
-## Installation ##
-
-1. Download the SiteMinderMonitor.zip from [AppDynamics Exchange][http://community.appdynamics.com/t5/eXchange-Community-AppDynamics/idb-p/extensions].
-You can build it from the source as well by running `mvn clean install`.
-2. Unzip as "SiteMinderMonitor" and copy the "SiteMinderMonitor" directory to `<MACHINE_AGENT_HOME>/monitors`
-
-
-# Configuration ##
-
+## Configuration
 Note : Please make sure to not use tab (\t) while editing yaml files. You may want to validate the yaml file using a [yaml validator](http://yamllint.com/)
 
 1. Configure the siteminder instances by editing the config.yml file in `<MACHINE_AGENT_HOME>/monitors/SiteMinderMonitor/`.
@@ -158,40 +148,25 @@ more details.
     ```
 Make sure to use the right path for Windows.
 
-### Credentials Encryption
+#### Yml Validation
+Please copy all the contents of the config.yml file and go to http://www.yamllint.com/ . On reaching the website, paste the contents and press the “Go” button on the bottom left.
 
-Please visit [this page](https://community.appdynamics.com/t5/Knowledge-Base/How-to-use-Password-Encryption-with-Extensions/ta-p/29397) to get detailed instructions on password encryption. The steps in this document will guide you through the whole process.
+## Metrics Provided
+This extension extracts metrics for the policyServer and webagents components.
 
-### Extensions Workbench
+## Extensions Workbench
 Workbench is an inbuilt feature provided with each extension in order to assist you to fine tune the extension setup before you actually deploy it on the controller. Please review the following document on [How to use the Extensions WorkBench](https://community.appdynamics.com/t5/Knowledge-Base/How-to-use-the-Extensions-WorkBench/ta-p/30130)
 
-### Troubleshooting
-1. Please ensure the RabbitMQ Management Plugin is enabled. Please check "" section of [this page](http://www.rabbitmq.com/management.html) for more details.
-2. Please follow the steps listed in this [troubleshooting-document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) in order to troubleshoot your issue. These are a set of common issues that customers might have faced during the installation of the extension. If these don't solve your issue, please follow the last step on the [troubleshooting-document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) to contact the support team.
-
-### Support Tickets
-If after going through the [Troubleshooting Document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) you have not been able to get your extension working, please file a ticket and add the following information.
-
-Please provide the following in order for us to assist you better.
-
-    1. Stop the running machine agent.
-    2. Delete all existing logs under <MachineAgent>/logs.
-    3. Please enable debug logging by editing the file <MachineAgent>/conf/logging/log4j.xml. Change the level value of the following <logger> elements to debug.
-        <logger name="com.singularity">
-        <logger name="com.appdynamics">
-    4. Start the machine agent and please let it run for 10 mins. Then zip and upload all the logs in the directory <MachineAgent>/logs/*.
-    5. Attach the zipped <MachineAgent>/conf/* directory here.
-    6. Attach the zipped <MachineAgent>/monitors/ExtensionFolderYouAreHavingIssuesWith directory here.
-
-For any support related questions, you can also contact help@appdynamics.com.
-
-
-
-### Contributing
-
+## Troubleshooting
+1. Please follow the steps listed in this [troubleshooting-document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) in order to troubleshoot your issue. These are a set of common issues that customers might have faced during the installation of the extension.
+2. Make sure to enable UDP traffic if not enabled by default.
+3. Once the SNMP subagent module is started, the value for the respective OIDs can be viewed in a tool provided by CA. This tool can be found in
+   the `<SiteMinder_Installation_Dir>\bin\snmpwalkrun.bat` directory.
+   
+## Contributing
 Always feel free to fork and contribute any changes directly here on [GitHub](https://github.com/Appdynamics/ca-siteminder-monitoring-extension).
 
-### Version
+## Version
 |          Name            |  Version   |
 |--------------------------|------------|
 |Extension Version         |2.0.0       |

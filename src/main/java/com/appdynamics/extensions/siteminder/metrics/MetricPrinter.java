@@ -17,7 +17,6 @@ import com.appdynamics.extensions.MetricWriteHelper;
 import com.google.common.base.Strings;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.Arrays;

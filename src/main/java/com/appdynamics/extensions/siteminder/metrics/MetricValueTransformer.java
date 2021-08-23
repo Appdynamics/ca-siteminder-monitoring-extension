@@ -11,9 +11,7 @@ package com.appdynamics.extensions.siteminder.metrics;
 
 import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.metrics.DeltaMetricsCalculator;
-import com.appdynamics.extensions.siteminder.SiteMinderMonitorTask;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 

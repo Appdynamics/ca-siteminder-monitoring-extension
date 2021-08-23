@@ -16,7 +16,6 @@ import com.appdynamics.extensions.metrics.AggregatorFactory;
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.snmp4j.Snmp;
 import org.snmp4j.Target;
 
@@ -29,7 +28,6 @@ import static com.appdynamics.extensions.siteminder.Util.convertToString;
 
 public class SiteMinderMonitorTask implements AMonitorTaskRunnable {
 
-    private String displayName;
     private MetricWriteHelper metricWriter;
 
     private static final Logger logger = ExtensionsLoggerFactory.getLogger(SiteMinderMonitorTask.class);
@@ -127,7 +125,7 @@ public class SiteMinderMonitorTask implements AMonitorTaskRunnable {
 
     @Override
     public void onTaskComplete() {
-        logger.info("All tasks for server {} finished", displayName);
+        logger.info("All tasks for server {} finished", convertToString(instance.get("displayName"),""));
     }
 
     static class Builder {
