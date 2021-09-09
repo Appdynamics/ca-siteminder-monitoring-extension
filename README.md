@@ -31,7 +31,7 @@ in the `<SiteMinder_Installation_Dir>\MIB` directory.
 Please place the extension in the **"monitors"** directory of your **Machine Agent** installation directory. Do not place the extension in the **"extensions"** directory of your **Machine Agent** installation directory.
 
 ## Configuration
-Note : Please make sure to not use tab (\t) while editing yaml files. You may want to validate the yaml file using a [yaml validator](http://yamllint.com/)
+Note : Please make sure to not use tab (\t) while editing yaml files. You may want to validate the yaml file using a [yaml validator](https://jsonformatter.org/yaml-validator)
 
 1. Configure the siteminder instances by editing the config.yml file in `<MACHINE_AGENT_HOME>/monitors/SiteMinderMonitor/`.
 2. Below is the default config.yml which has metrics configured already
