@@ -38,12 +38,12 @@ Note : Please make sure to not use tab (\t) while editing yaml files. You may wa
    For eg. 
    
    ```
-     #This will create this metric in all the tiers, under this path
+     #Metric prefix when SIM is enabled
      #metricPrefix: Custom Metrics|SiteMinder
 
      #This will create it in specific Tier/Component. Make sure to replace <COMPONENT_ID> with the appropriate one
      #from your environment. To find the <COMPONENT_ID> in your environment, please follow the screenshot in
-     #https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
+     #https://community.appdynamics.com/t5/Knowledge-Base/How-do-I-troubleshoot-missing-custom-metrics-or-extensions/ta-p/28695
      metricPrefix: Server|Component:<COMPONENT_ID>|Custom Metrics|SiteMinder
 
 
@@ -134,8 +134,7 @@ Note : Please make sure to not use tab (\t) while editing yaml files. You may wa
 
    ```
 
-Please make sure to replace the COMPONENT_ID with the correct id in your environment. Please read the comment in the config.yml for
-more details.
+Please make sure to replace the COMPONENT_ID with the correct id in your environment. More details around metric prefix can be found [here](https://community.appdynamics.com/t5/Knowledge-Base/How-do-I-troubleshoot-missing-custom-metrics-or-extensions/ta-p/28695).
 
 3. Configure the path to the config.yml file by editing the <task-arguments> in the monitor.xml file in the `<MACHINE_AGENT_HOME>/monitors/SiteMinderMonitor/` directory. Below is the sample
 
@@ -149,7 +148,7 @@ more details.
 Make sure to use the right path for Windows.
 
 #### Yml Validation
-Please copy all the contents of the config.yml file and go to http://www.yamllint.com/ . On reaching the website, paste the contents and press the “Go” button on the bottom left.
+Please copy all the contents of the config.yml file and go [here](https://jsonformatter.org/yaml-validator) . On reaching the website, paste the contents and press the “Validate YAML” button.
 
 ## Metrics Provided
 This extension extracts metrics for the policyServer and webagents components.
@@ -170,6 +169,7 @@ Always feel free to fork and contribute any changes directly here on [GitHub](ht
 |          Name            |  Version   |
 |--------------------------|------------|
 |Extension Version         |2.0.0       |
-|Controller Compatibility  |4.5 or Later|
-|Machine Agent Version     |4.5.13+     |
 |Last Update               |20/08/2021 |
+|CHangeList|[ChangeLog](https://github.com/Appdynamics/ca-siteminder-monitoring-extension/blob/master/CHANGELOG.md)|  
+   
+**Note**: While extensions are maintained and supported by customers under the open-source licensing model, they interact with agents and Controllers that are subject to [AppDynamics’ maintenance and support policy](https://docs.appdynamics.com/latest/en/product-and-release-announcements/maintenance-support-for-software-versions). Some extensions have been tested with AppDynamics 4.5.13+ artifacts, but you are strongly recommended against using versions that are no longer supported.   
