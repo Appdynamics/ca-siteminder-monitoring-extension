@@ -7,13 +7,14 @@
  */
 package org.snmp4j.log;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.snmp4j.util.EnumerationIterator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * The <code>Log4jLogAdapter</code> implements a logging adapter for Log4J.
@@ -43,7 +44,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    * @param message the message to log.
    */
   public void debug(Serializable message) {
-    logger.log(FQCN, Level.DEBUG, message, null);
+    logger.log(Level.DEBUG, message, null);
   }
 
   /**
@@ -52,7 +53,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    * @param message the message to log.
    */
   public void error(Serializable message) {
-    logger.log(FQCN, Level.ERROR, message, null);
+    logger.log(Level.ERROR, message, null);
   }
 
   /**
@@ -62,7 +63,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    * @param throwable the exception that caused to error.
    */
   public void error(CharSequence message, Throwable throwable) {
-    logger.log(FQCN, Level.ERROR, message, throwable);
+    logger.log(Level.ERROR, message, throwable);
   }
 
   /**
@@ -71,7 +72,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    * @param message the message to log.
    */
   public void info(CharSequence message) {
-    logger.log(FQCN, Level.INFO, message, null);
+    logger.log(Level.INFO, message, null);
   }
 
   /**
@@ -101,7 +102,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    *   otherwise.
    */
   public boolean isWarnEnabled() {
-    return logger.isEnabledFor(Level.WARN);
+    return logger.isWarnEnabled();
   }
 
   /**
@@ -110,15 +111,15 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
    * @param message the message to log.
    */
   public void warn(Serializable message) {
-    logger.log(FQCN, Level.WARN, message, null);
+    logger.log(Level.WARN, message, null);
   }
 
   public void fatal(Object message) {
-    logger.log(FQCN, Level.FATAL, message, null);
+    logger.log(Level.FATAL, message, null);
   }
 
   public void fatal(CharSequence message, Throwable throwable) {
-    logger.log(FQCN, Level.FATAL, message, throwable);
+    logger.log(Level.FATAL, message, throwable);
   }
 
   public void setLogLevel(LogLevel level) {
@@ -131,7 +132,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
         l = Level.ALL;
         break;
       case LogLevel.LEVEL_TRACE:
-        l = Level.DEBUG;
+        l = Level.TRACE;
         break;
       case LogLevel.LEVEL_DEBUG:
         l = Level.DEBUG;
@@ -151,7 +152,7 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
       default:
         l = null;
     }
-    logger.setLevel(l);
+    Configurator.setLevel(logger.getName(),l);
   }
 
   public Logger getLogger() {
@@ -171,23 +172,23 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
     if (l == null) {
       return LogLevel.NONE;
     }
-    switch (l.toInt()) {
-      case Level.OFF_INT:
-        return LogLevel.OFF;
-      case Level.ALL_INT:
-        return LogLevel.ALL;
-      case Level.DEBUG_INT:
-        return LogLevel.DEBUG;
-      case Level.INFO_INT:
-        return LogLevel.INFO;
-      case Level.WARN_INT:
-        return LogLevel.WARN;
-      case Level.ERROR_INT:
-        return LogLevel.ERROR;
-      case Level.FATAL_INT:
-        return LogLevel.FATAL;
+    if(l.intLevel()==Level.OFF.intLevel()){
+      return LogLevel.OFF;
+    } else if(l.intLevel()==Level.ALL.intLevel()){
+      return LogLevel.ALL;
+    } else if(l.intLevel()==Level.DEBUG.intLevel()){
+      return LogLevel.DEBUG;
+    } else if(l.intLevel()==Level.INFO.intLevel()){
+      return LogLevel.INFO;
+    } else if(l.intLevel()==Level.WARN.intLevel()){
+      return LogLevel.WARN;
+    } else if(l.intLevel()==Level.ERROR.intLevel()){
+      return LogLevel.ERROR;
+    } else if(l.intLevel()==Level.FATAL.intLevel()){
+      return LogLevel.FATAL;
+    } else{
+      return LogLevel.DEBUG;
     }
-    return LogLevel.DEBUG;
   }
 
   public int compareTo(Object o) {
@@ -195,12 +196,13 @@ public class Log4jLogAdapter implements LogAdapter, Comparable {
   }
 
   public LogLevel getEffectiveLogLevel() {
-    Level l = logger.getEffectiveLevel();
+    Level l = logger.getLevel();
     return toLogLevel(l);
   }
 
   @SuppressWarnings("unchecked")
   public Iterator<Appender> getLogHandler() {
-    return new EnumerationIterator<Appender>(logger.getAllAppenders());
+    Map<String, Appender> appenderMap = ((org.apache.logging.log4j.core.Logger)logger).getAppenders();
+    return (appenderMap.values()).iterator();
   }
 }

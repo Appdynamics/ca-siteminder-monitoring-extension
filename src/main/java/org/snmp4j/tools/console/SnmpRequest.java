@@ -7,6 +7,8 @@
  */
 package org.snmp4j.tools.console;
 
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.snmp4j.*;
 import org.snmp4j.asn1.BER;
 import org.snmp4j.event.ResponseEvent;
@@ -39,7 +41,8 @@ public class SnmpRequest implements CommandResponder, PDUFactory {
   // initialize Java logging
   static {
     LogFactory.setLogFactory(new Log4jLogFactory());
-    org.apache.log4j.BasicConfigurator.configure();
+    //org.apache.log4j.BasicConfigurator.configure();
+    Configurator.initialize(new DefaultConfiguration());
     BER.setCheckSequenceLength(false);
   }
 

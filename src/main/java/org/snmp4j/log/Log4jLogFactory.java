@@ -7,7 +7,9 @@
  */
 package org.snmp4j.log;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,21 +31,22 @@ public class Log4jLogFactory extends LogFactory {
   }
 
   protected LogAdapter createLogger(Class c) {
-    return new Log4jLogAdapter(Logger.getLogger(c));
+    return new Log4jLogAdapter(LogManager.getLogger(c));
   }
 
   protected LogAdapter createLogger(String className) {
-    return new Log4jLogAdapter(Logger.getLogger(className));
+    return new Log4jLogAdapter(LogManager.getLogger(className));
   }
 
   public LogAdapter getRootLogger() {
-    return new Log4jLogAdapter(Logger.getRootLogger());
+    return new Log4jLogAdapter(LogManager.getRootLogger());
   }
 
   @SuppressWarnings("unchecked")
   public Iterator loggers() {
-    ArrayList<Logger> l = Collections.<Logger>list(Logger.getRootLogger().getLoggerRepository().getCurrentLoggers());
-    ArrayList<Log4jLogAdapter> la = new ArrayList<Log4jLogAdapter>(l.size());
+    LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+    ArrayList<Logger> l = new ArrayList<>(loggerContext.getLoggers());
+    ArrayList<Log4jLogAdapter> la = new ArrayList<>(l.size());
     for (Logger logger : l) {
       la.add(new Log4jLogAdapter(logger));
     }
